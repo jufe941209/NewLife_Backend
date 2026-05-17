@@ -27,8 +27,11 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore NewLife.csproj -PackagesDirectory packages
 
-      - name: Build with MSBuild
-        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl="${{ github.workspace }}\\publish" /p:DeleteExistingFiles=true
+      - name: Build and publish with MSBuild
+        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:publishUrl=publish\ /p:DeleteExistingFiles=true /p:EnableMSDeployBackup=false
+
+      - name: List publish folder
+        run: dir publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
