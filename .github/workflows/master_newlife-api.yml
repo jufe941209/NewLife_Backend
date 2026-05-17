@@ -28,13 +28,13 @@ jobs:
         run: nuget restore NewLife.csproj -PackagesDirectory packages
 
       - name: Build with MSBuild
-        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl="myapp" /p:DeleteExistingFiles=true
+        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl="${{ github.workspace }}\\publish" /p:DeleteExistingFiles=true
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: net-app
-          path: myapp
+          path: publish
 
   deploy:
     runs-on: windows-latest
@@ -48,6 +48,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: net-app
+          path: .
 
       - name: Login to Azure
         uses: azure/login@v2
