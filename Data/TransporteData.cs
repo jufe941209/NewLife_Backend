@@ -10,80 +10,52 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
-        // INSERTAR
         public static bool InsertarTransporte(Transporte oTransporte)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Insertar_Transporte '" + oTransporte.placa + "','" +
-                               oTransporte.tipo + "','" +
-                               oTransporte.descripcion + "'," +
-                               oTransporte.cedula_domi;
-
+            string estado = string.IsNullOrEmpty(oTransporte.estado) ? "Activo" : oTransporte.estado;
+            string sentencia = "INSERT INTO TRANSPORTE (cedula_domi, placa, tipo, descripcion, estado) VALUES ('" +
+                               oTransporte.cedula_domi + "','" +
+                               oTransporte.placa + "','" +
+                               (oTransporte.tipo ?? "") + "','" +
+                               (oTransporte.descripcion ?? "") + "','" +
+                               estado + "')";
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                ultimoError = "";
-                objEst = null;
-                return true;
-            }
+            { ultimoError = ""; objEst = null; return true; }
             else
-            {
-                ultimoError = objEst.Error;
-                objEst = null;
-                return false;
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
 
-        // ACTUALIZAR
         public static bool ActualizarTransporte(Transporte oTransporte)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Actualizar_Transporte '" + oTransporte.placa + "','" +
-                               oTransporte.tipo + "','" +
-                               oTransporte.descripcion + "','" +
-                               oTransporte.estado + "'," +
-                               oTransporte.cedula_domi;
-
+            string sentencia = "UPDATE TRANSPORTE SET " +
+                               "cedula_domi = '" + oTransporte.cedula_domi + "', " +
+                               "tipo = '" + (oTransporte.tipo ?? "") + "', " +
+                               "descripcion = '" + (oTransporte.descripcion ?? "") + "', " +
+                               "estado = '" + (oTransporte.estado ?? "Activo") + "' " +
+                               "WHERE placa = '" + oTransporte.placa + "'";
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                ultimoError = "";
-                objEst = null;
-                return true;
-            }
+            { ultimoError = ""; objEst = null; return true; }
             else
-            {
-                ultimoError = objEst.Error;
-                objEst = null;
-                return false;
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
 
-        // ELIMINAR
         public static bool EliminarTransporte(string placa)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Eliminar_Transporte '" + placa + "'";
-
+            string sentencia = "DELETE FROM TRANSPORTE WHERE placa = '" + placa + "'";
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                ultimoError = "";
-                objEst = null;
-                return true;
-            }
+            { ultimoError = ""; objEst = null; return true; }
             else
-            {
-                ultimoError = objEst.Error;
-                objEst = null;
-                return false;
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
 
-        // LISTAR
         public static List<Transporte> ListarTransportes()
         {
             List<Transporte> lista = new List<Transporte>();
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Listar_Transportes";
-
+            string sentencia = "SELECT cedula_domi, placa, tipo, descripcion, estado FROM TRANSPORTE ORDER BY placa";
             if (objEst.Consultar(sentencia, false))
             {
                 SqlDataReader dr = objEst.Reader;
@@ -102,13 +74,11 @@ namespace NewLife.Data
             return lista;
         }
 
-        // CONSULTAR
         public static Transporte ConsultarTransporte(string placa)
         {
             Transporte oTransporte = null;
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Consultar_Transporte '" + placa + "'";
-
+            string sentencia = "SELECT cedula_domi, placa, tipo, descripcion, estado FROM TRANSPORTE WHERE placa = '" + placa + "'";
             if (objEst.Consultar(sentencia, false))
             {
                 SqlDataReader dr = objEst.Reader;

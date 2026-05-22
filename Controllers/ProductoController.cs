@@ -11,10 +11,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Producto> lista = ProductoData.ListarProductos();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         [HttpGet]
@@ -59,6 +56,25 @@ namespace NewLife.Controllers
             bool resultado = ProductoData.EliminarProducto(id);
             if (resultado)
                 return Ok("Producto eliminado exitosamente.");
+            else
+                return BadRequest(ProductoData.ultimoError);
+        }
+
+        [HttpPost]
+        [Route("api/producto/migrar-stock")]
+        public IHttpActionResult MigrarStock()
+        {
+            string resultado = ProductoData.MigrarStockReal();
+            return Ok(resultado);
+        }
+
+        [HttpPost]
+        [Route("api/producto/reducir-stock/{id}/{cantidad}")]
+        public IHttpActionResult ReducirStock(string id, int cantidad)
+        {
+            bool resultado = ProductoData.ReducirStock(id, cantidad);
+            if (resultado)
+                return Ok("Stock reducido.");
             else
                 return BadRequest(ProductoData.ultimoError);
         }

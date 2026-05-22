@@ -12,10 +12,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Cliente> lista = ClienteData.ListarClientes();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         // GET api/cliente/1020304050
@@ -64,7 +61,9 @@ namespace NewLife.Controllers
             if (resultado)
                 return Ok("Cliente eliminado exitosamente.");
             else
-                return BadRequest("No se pudo eliminar el cliente.");
+                return BadRequest(string.IsNullOrEmpty(ClienteData.ultimoError)
+                    ? "No se pudo eliminar el cliente. Puede tener facturas u otros registros asociados."
+                    : ClienteData.ultimoError);
         }
     }
 }

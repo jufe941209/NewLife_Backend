@@ -1,4 +1,4 @@
-﻿using ApiEjemplo.Data;
+using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
@@ -10,14 +10,15 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
-        // INSERTAR - quitar fecha y estado_pago, el SP los maneja solo
+        // INSERTAR
         public static bool InsertarFacturaVenta(FacturaVenta oFactura)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Insertar_FacturaVenta '" + oFactura.numero_factura + "','" +
-                               oFactura.metodo_pago + "','" +
-                               oFactura.direccion_envio + "','" +
-                               oFactura.cedula_cli + "'";
+            string sentencia = "INSERT INTO FACTURA_VENTA (numero_factura, fecha, metodo_pago, estado_pago, direccion_envio, cedula_cli) VALUES ('" +
+                               oFactura.numero_factura.Replace("'", "''") + "', GETDATE(), '" +
+                               oFactura.metodo_pago.Replace("'", "''") + "', 'Pendiente', '" +
+                               (oFactura.direccion_envio ?? "").Replace("'", "''") + "', '" +
+                               oFactura.cedula_cli.Replace("'", "''") + "')";
 
             if (objEst.EjecutarSentencia(sentencia, false))
             {
@@ -32,14 +33,15 @@ namespace NewLife.Data
             }
         }
 
-        // ACTUALIZAR - solo los params que pide el SP
+        // ACTUALIZAR
         public static bool ActualizarFacturaVenta(FacturaVenta oFactura)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Actualizar_FacturaVenta '" + oFactura.numero_factura + "','" +
-                               oFactura.metodo_pago + "','" +
-                               oFactura.estado_pago + "','" +
-                               oFactura.direccion_envio + "'";
+            string sentencia = "UPDATE FACTURA_VENTA SET " +
+                               "metodo_pago = '" + oFactura.metodo_pago.Replace("'", "''") + "', " +
+                               "estado_pago = '" + oFactura.estado_pago.Replace("'", "''") + "', " +
+                               "direccion_envio = '" + (oFactura.direccion_envio ?? "").Replace("'", "''") + "' " +
+                               "WHERE numero_factura = '" + oFactura.numero_factura.Replace("'", "''") + "'";
 
             if (objEst.EjecutarSentencia(sentencia, false))
             {
@@ -58,7 +60,8 @@ namespace NewLife.Data
         public static bool EliminarFacturaVenta(string numero_factura)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Eliminar_FacturaVenta '" + numero_factura + "'";
+            string sentencia = "DELETE FROM DETALLE_FACTURA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'; " +
+                               "DELETE FROM FACTURA_VENTA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'";
 
             if (objEst.EjecutarSentencia(sentencia, false))
             {
@@ -78,7 +81,7 @@ namespace NewLife.Data
         {
             List<FacturaVenta> lista = new List<FacturaVenta>();
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Listar_FacturasVenta";
+            string sentencia = "SELECT numero_factura, fecha, metodo_pago, estado_pago, direccion_envio, cedula_cli FROM FACTURA_VENTA ORDER BY fecha DESC";
 
             if (objEst.Consultar(sentencia, false))
             {
@@ -104,7 +107,7 @@ namespace NewLife.Data
         {
             FacturaVenta oFactura = null;
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Consultar_FacturaVenta '" + numero_factura + "'";
+            string sentencia = "SELECT numero_factura, fecha, metodo_pago, estado_pago, direccion_envio, cedula_cli FROM FACTURA_VENTA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'";
 
             if (objEst.Consultar(sentencia, false))
             {

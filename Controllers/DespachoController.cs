@@ -1,4 +1,4 @@
-﻿using NewLife.Data;
+using NewLife.Data;
 using NewLife.Models;
 using System.Collections.Generic;
 using System.Web.Http;
@@ -12,10 +12,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Despacho> lista = DespachoData.ListarDespachos();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         // GET api/despacho/1
@@ -50,11 +47,18 @@ namespace NewLife.Controllers
             if (oDespacho == null)
                 return BadRequest("Datos inválidos.");
 
+            // Domiciliario obligatorio para estados activos
+            if ((oDespacho.estado == "En camino" || oDespacho.estado == "Entregado") &&
+                string.IsNullOrEmpty(oDespacho.cc_domiciliario))
+            {
+                return BadRequest("Un despacho en estado '" + oDespacho.estado + "' debe tener un domiciliario asignado.");
+            }
+
             bool resultado = DespachoData.ActualizarDespacho(oDespacho);
             if (resultado)
                 return Ok("Despacho actualizado exitosamente.");
             else
-                return BadRequest("No se pudo actualizar el despacho.");
+                return BadRequest(DespachoData.ultimoError);
         }
 
         // DELETE api/despacho/1
@@ -65,7 +69,7 @@ namespace NewLife.Controllers
             if (resultado)
                 return Ok("Despacho eliminado exitosamente.");
             else
-                return BadRequest("No se pudo eliminar el despacho.");
+                return BadRequest(DespachoData.ultimoError);
         }
     }
 }

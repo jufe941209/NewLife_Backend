@@ -12,10 +12,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Categoria> lista = CategoriaData.ListarCategorias();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         // GET api/categoria/1

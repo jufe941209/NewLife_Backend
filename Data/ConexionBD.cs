@@ -60,7 +60,7 @@ namespace ApiEjemplo.Data
             try
             {
                 //strCadenaCnx = "Data Source=localhost\\MSSQLSERVER01;Initial Catalog=db_newLife;Integrated Security=True";
-                strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=DB-NewLife;Persist Security Info=False;User ID=usuario_backend;Password=Ju.1013654544;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;";                //strCadenaCnx = "workstation id=BD_2977449.mssql.somee.com;packet size=4096;user id=adal2025_SQLLogin_1;pwd=t67bd8zqrk;data source=BD_2977449.mssql.somee.com;persist security info=False;initial catalog=BD_2977449;TrustServerCertificate=True";
+                strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=db_newLife;Persist Security Info=False;User ID=usuario_backend;Password=Ju.1013654544;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;";
                 // Data source equivale en este caso al nombre del servidor de base de datos
                 // Catalog= equivale al nombre de la base de datos a la que se va a conectar en mi caso la base de datos se llama db_newLife
                 //strCadenaCnx = "workstation id = BDACA2503680.mssql.somee.com; packet size = 4096; user id = adalcar26_SQLLogin_1; pwd = ao9568obaw; data source = BDACA2503680.mssql.somee.com; persist security info = False; initial catalog = BDACA2503680";

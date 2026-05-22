@@ -11,10 +11,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Transporte> lista = TransporteData.ListarTransportes();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         [HttpGet]

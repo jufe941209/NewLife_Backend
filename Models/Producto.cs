@@ -11,6 +11,7 @@ namespace NewLife.Models
         public string nombres { get; set; }                        // varchar(150) ✅
         public string descripcion { get; set; }                    // varchar(255) nullable ✅
         public int stock_min { get; set; }                         // int ✅
+        public int stock_real { get; set; }                        // int — inventario actual
         public string img_url { get; set; }                        // varchar(255) nullable ✅
         public DateTime fecha_registro { get; set; }               // date ✅
         public DateTime? fecha_ultima_modificacion { get; set; }   // datetime nullable -> DateTime?

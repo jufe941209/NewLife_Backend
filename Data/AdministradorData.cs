@@ -1,82 +1,61 @@
-﻿using ApiEjemplo.Data;
+using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Web;
 
 namespace NewLife.Data
 {
     public class AdministradorData
     {
-        // INSERTAR
+        public static string ultimoError = "";
+
         public static bool InsertarAdministrador(Administrador oAdministrador)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Insertar_Administrador '" + oAdministrador.cedula_adm + "','" +
-                               oAdministrador.correo + "','" +
-                               oAdministrador.contrasena + "','" +
-                               oAdministrador.nombres + "'";
+            string sentencia = "INSERT INTO ADMINISTRADOR (cedula_adm, correo, contrasena, nombres, fecha_registro, estado) VALUES ('" +
+                               oAdministrador.cedula_adm.Replace("'", "''") + "','" +
+                               oAdministrador.correo.Replace("'", "''") + "','" +
+                               oAdministrador.contrasena.Replace("'", "''") + "','" +
+                               oAdministrador.nombres.Replace("'", "''") + "',GETDATE(),'Activo')";
 
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                objEst = null;
-                return true;
-            }
+            { objEst = null; return true; }
             else
-            {
-                string error = objEst.Error; // captura el error
-                objEst = null;
-                return false; // pon un breakpoint aquí
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
 
-        // ACTUALIZAR
         public static bool ActualizarAdministrador(Administrador oAdministrador)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Actualizar_Administrador '" + oAdministrador.cedula_adm + "','" +
-                               oAdministrador.correo + "','" +
-                               oAdministrador.nombres + "','" +
-                               oAdministrador.estado + "'";
+            string sentencia = "UPDATE ADMINISTRADOR SET " +
+                               "correo = '" + oAdministrador.correo.Replace("'", "''") + "', " +
+                               "nombres = '" + oAdministrador.nombres.Replace("'", "''") + "', " +
+                               "estado = '" + (oAdministrador.estado ?? "Activo") + "' " +
+                               "WHERE cedula_adm = '" + oAdministrador.cedula_adm.Replace("'", "''") + "'";
 
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                objEst = null;
-                return true;
-            }
+            { objEst = null; return true; }
             else
-            {
-                objEst = null;
-                return false;
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
-        
 
-        // ELIMINAR
         public static bool EliminarAdministrador(string cedula_adm)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Eliminar_Administrador '" + cedula_adm + "'";
+            string sentencia = "DELETE FROM ADMINISTRADOR WHERE cedula_adm = '" + cedula_adm.Replace("'", "''") + "'";
 
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                objEst = null;
-                return true;
-            }
+            { objEst = null; return true; }
             else
-            {
-                objEst = null;
-                return false;
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
 
-        // LISTAR
         public static List<Administrador> ListarAdministradores()
         {
             List<Administrador> lista = new List<Administrador>();
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Listar_Administradores";
+            string sentencia = "SELECT cedula_adm, correo, contrasena, nombres, fecha_registro, estado FROM ADMINISTRADOR ORDER BY nombres";
 
             if (objEst.Consultar(sentencia, false))
             {
@@ -97,12 +76,12 @@ namespace NewLife.Data
             return lista;
         }
 
-        // CONSULTAR POR CÉDULA
         public static Administrador ConsultarAdministrador(string cedula_adm)
         {
             Administrador oAdministrador = null;
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Consultar_Administrador '" + cedula_adm + "'";
+            string sentencia = "SELECT cedula_adm, correo, contrasena, nombres, fecha_registro, estado FROM ADMINISTRADOR WHERE cedula_adm = '" +
+                               cedula_adm.Replace("'", "''") + "'";
 
             if (objEst.Consultar(sentencia, false))
             {

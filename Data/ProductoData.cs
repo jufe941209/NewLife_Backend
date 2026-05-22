@@ -1,8 +1,9 @@
-﻿using ApiEjemplo.Data;
+using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Globalization;
 
 namespace NewLife.Data
 {
@@ -10,20 +11,22 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
-        // INSERTAR - quitar fecha_registro, fecha_ultima_modificacion y estado, el SP los maneja solo
+        // INSERTAR - SQL directo para incluir stock_real
         public static bool InsertarProducto(Producto oProducto)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Insertar_Producto '" + oProducto.codigo_prod + "','" +
+            string sentencia = "INSERT INTO PRODUCTO (codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, precio, capacidad, temperatura_uso, numero_categoria, id_tipo_producto, fecha_registro, estado) VALUES ('" +
+                               oProducto.codigo_prod + "','" +
                                oProducto.nombres + "','" +
-                               oProducto.descripcion + "'," +
-                               oProducto.stock_min + ",'" +
-                               oProducto.img_url + "'," +
-                               oProducto.precio.ToString(System.Globalization.CultureInfo.InvariantCulture) + "," +
-                               (oProducto.capacidad != null ? "'" + oProducto.capacidad + "'" : "NULL") + "," +
-                               (oProducto.temperatura_uso != null ? "'" + oProducto.temperatura_uso + "'" : "NULL") + "," +
+                               (oProducto.descripcion ?? "") + "'," +
+                               oProducto.stock_min + "," +
+                               oProducto.stock_real + ",'" +
+                               (oProducto.img_url ?? "") + "'," +
+                               oProducto.precio.ToString(CultureInfo.InvariantCulture) + "," +
+                               (!string.IsNullOrEmpty(oProducto.capacidad) ? "'" + oProducto.capacidad + "'" : "NULL") + "," +
+                               (!string.IsNullOrEmpty(oProducto.temperatura_uso) ? "'" + oProducto.temperatura_uso + "'" : "NULL") + "," +
                                oProducto.numero_categoria + "," +
-                               oProducto.id_tipo_producto;
+                               oProducto.id_tipo_producto + ",GETDATE(),'Activo')";
 
             if (objEst.EjecutarSentencia(sentencia, false))
             {
@@ -38,21 +41,23 @@ namespace NewLife.Data
             }
         }
 
-        // ACTUALIZAR - quitar fecha_registro y fecha_ultima_modificacion, el SP los maneja solo
+        // ACTUALIZAR
         public static bool ActualizarProducto(Producto oProducto)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Actualizar_Producto '" + oProducto.codigo_prod + "','" +
-                               oProducto.nombres + "','" +
-                               oProducto.descripcion + "'," +
-                               oProducto.stock_min + ",'" +
-                               oProducto.img_url + "'," +
-                               oProducto.precio.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",'" +
-                               oProducto.estado + "'," +
-                               (oProducto.capacidad != null ? "'" + oProducto.capacidad + "'" : "NULL") + "," +
-                               (oProducto.temperatura_uso != null ? "'" + oProducto.temperatura_uso + "'" : "NULL") + "," +
-                               oProducto.numero_categoria + "," +
-                               oProducto.id_tipo_producto;
+            string sentencia = "UPDATE PRODUCTO SET " +
+                               "nombres = '" + oProducto.nombres + "', " +
+                               "descripcion = '" + (oProducto.descripcion ?? "") + "', " +
+                               "stock_min = " + oProducto.stock_min + ", " +
+                               "stock_real = " + oProducto.stock_real + ", " +
+                               "img_url = '" + (oProducto.img_url ?? "") + "', " +
+                               "precio = " + oProducto.precio.ToString(CultureInfo.InvariantCulture) + ", " +
+                               "estado = '" + (oProducto.estado ?? "Activo") + "', " +
+                               "capacidad = " + (!string.IsNullOrEmpty(oProducto.capacidad) ? "'" + oProducto.capacidad.Replace("'", "''") + "'" : "NULL") + ", " +
+                               "temperatura_uso = " + (!string.IsNullOrEmpty(oProducto.temperatura_uso) ? "'" + oProducto.temperatura_uso.Replace("'", "''") + "'" : "NULL") + ", " +
+                               "numero_categoria = " + oProducto.numero_categoria + ", " +
+                               "id_tipo_producto = " + oProducto.id_tipo_producto + " " +
+                               "WHERE codigo_prod = '" + oProducto.codigo_prod.Replace("'", "''") + "'";
 
             if (objEst.EjecutarSentencia(sentencia, false))
             {
@@ -71,7 +76,7 @@ namespace NewLife.Data
         public static bool EliminarProducto(string codigo_prod)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Eliminar_Producto '" + codigo_prod + "'";
+            string sentencia = "DELETE FROM PRODUCTO WHERE codigo_prod = '" + codigo_prod + "'";
 
             if (objEst.EjecutarSentencia(sentencia, false))
             {
@@ -86,12 +91,14 @@ namespace NewLife.Data
             }
         }
 
-        // LISTAR
+        // LISTAR - SQL directo para incluir stock_real
         public static List<Producto> ListarProductos()
         {
             List<Producto> lista = new List<Producto>();
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Listar_Productos";
+            string sentencia = "SELECT codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, " +
+                               "fecha_registro, precio, estado, capacidad, " +
+                               "temperatura_uso, numero_categoria, id_tipo_producto FROM PRODUCTO ORDER BY nombres";
 
             if (objEst.Consultar(sentencia, false))
             {
@@ -102,15 +109,16 @@ namespace NewLife.Data
                     {
                         codigo_prod = dr["codigo_prod"].ToString(),
                         nombres = dr["nombres"].ToString(),
-                        descripcion = dr["descripcion"].ToString(),
+                        descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString(),
                         stock_min = Convert.ToInt32(dr["stock_min"]),
-                        img_url = dr["img_url"].ToString(),
+                        stock_real = Convert.ToInt32(dr["stock_real"]),
+                        img_url = dr["img_url"] == DBNull.Value ? "" : dr["img_url"].ToString(),
                         fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                        fecha_ultima_modificacion = dr["fecha_ultima_modificacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_ultima_modificacion"]),
+                        fecha_ultima_modificacion = null,
                         precio = Convert.ToDecimal(dr["precio"]),
                         estado = dr["estado"].ToString(),
-                        capacidad = dr["capacidad"].ToString(),
-                        temperatura_uso = dr["temperatura_uso"].ToString(),
+                        capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
+                        temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
                         numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
                         id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"])
                     });
@@ -119,12 +127,15 @@ namespace NewLife.Data
             return lista;
         }
 
-        // CONSULTAR
+        // CONSULTAR - SQL directo para incluir stock_real
         public static Producto ConsultarProducto(string codigo_prod)
         {
             Producto oProducto = null;
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Consultar_Producto '" + codigo_prod + "'";
+            string sentencia = "SELECT codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, " +
+                               "fecha_registro, precio, estado, capacidad, " +
+                               "temperatura_uso, numero_categoria, id_tipo_producto FROM PRODUCTO " +
+                               "WHERE codigo_prod = '" + codigo_prod.Replace("'", "''") + "'";
 
             if (objEst.Consultar(sentencia, false))
             {
@@ -135,21 +146,51 @@ namespace NewLife.Data
                     {
                         codigo_prod = dr["codigo_prod"].ToString(),
                         nombres = dr["nombres"].ToString(),
-                        descripcion = dr["descripcion"].ToString(),
+                        descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString(),
                         stock_min = Convert.ToInt32(dr["stock_min"]),
-                        img_url = dr["img_url"].ToString(),
+                        stock_real = Convert.ToInt32(dr["stock_real"]),
+                        img_url = dr["img_url"] == DBNull.Value ? "" : dr["img_url"].ToString(),
                         fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                        fecha_ultima_modificacion = dr["fecha_ultima_modificacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_ultima_modificacion"]),
+                        fecha_ultima_modificacion = null,
                         precio = Convert.ToDecimal(dr["precio"]),
                         estado = dr["estado"].ToString(),
-                        capacidad = dr["capacidad"].ToString(),
-                        temperatura_uso = dr["temperatura_uso"].ToString(),
+                        capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
+                        temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
                         numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
                         id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"])
                     };
                 }
             }
             return oProducto;
+        }
+
+        // REDUCIR STOCK al realizar una venta
+        public static bool ReducirStock(string codigo_prod, int cantidad)
+        {
+            ConexionBD obj = new ConexionBD();
+            string sentencia = "UPDATE PRODUCTO SET stock_real = CASE WHEN stock_real >= " + cantidad +
+                               " THEN stock_real - " + cantidad +
+                               " ELSE 0 END WHERE codigo_prod = '" + codigo_prod.Replace("'", "''") + "'";
+            if (obj.EjecutarSentencia(sentencia, false))
+                return true;
+            else
+            {
+                ultimoError = obj.Error;
+                return false;
+            }
+        }
+
+        // MIGRACIÓN: añade columna stock_real si no existe
+        public static string MigrarStockReal()
+        {
+            ConexionBD obj = new ConexionBD();
+            string sentencia =
+                "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'stock_real' AND Object_ID = OBJECT_ID(N'PRODUCTO')) " +
+                "BEGIN ALTER TABLE PRODUCTO ADD stock_real INT NOT NULL DEFAULT 0 END";
+            if (obj.EjecutarSentencia(sentencia, false))
+                return "Columna stock_real añadida o ya existente.";
+            else
+                return "Error: " + obj.Error;
         }
     }
 }

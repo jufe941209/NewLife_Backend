@@ -1,4 +1,4 @@
-﻿using ApiEjemplo.Data;
+using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
@@ -10,77 +10,82 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
-        // INSERTAR - quitar fecha_registro y estado, el SP los maneja solo
         public static bool InsertarResponsable(Responsable oResponsable)
         {
+            string contrasena = string.IsNullOrEmpty(oResponsable.contrasena) ? "111111" : oResponsable.contrasena;
+            // Intentar con columna contrasena
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Insertar_Responsable '" + oResponsable.cedula_resp + "','" +
+            string sentencia = "INSERT INTO RESPONSABLE (cedula_resp, nombres, telefono, correo, contrasena, fecha_registro, estado) VALUES ('" +
+                               oResponsable.cedula_resp + "','" +
                                oResponsable.nombres + "','" +
-                               oResponsable.telefono + "','" +
-                               oResponsable.correo + "'";
-
+                               (oResponsable.telefono ?? "") + "','" +
+                               (oResponsable.correo ?? "") + "','" +
+                               contrasena + "',GETDATE(),'Activo')";
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                objEst = null;
-                return true;
-            }
-            else
-            {
-                ultimoError = objEst.Error;
-                objEst = null;
-                return false;
-            }
+            { ultimoError = ""; objEst = null; return true; }
+
+            // Fallback: columna contrasena no existe aún
+            objEst = new ConexionBD();
+            sentencia = "INSERT INTO RESPONSABLE (cedula_resp, nombres, telefono, correo, fecha_registro, estado) VALUES ('" +
+                        oResponsable.cedula_resp + "','" +
+                        oResponsable.nombres + "','" +
+                        (oResponsable.telefono ?? "") + "','" +
+                        (oResponsable.correo ?? "") + "',GETDATE(),'Activo')";
+            if (objEst.EjecutarSentencia(sentencia, false))
+            { ultimoError = ""; objEst = null; return true; }
+
+            ultimoError = objEst.Error;
+            objEst = null;
+            return false;
         }
 
-        // ACTUALIZAR - quitar fecha_registro
         public static bool ActualizarResponsable(Responsable oResponsable)
         {
-            ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Actualizar_Responsable '" + oResponsable.cedula_resp + "','" +
-                               oResponsable.nombres + "','" +
-                               oResponsable.telefono + "','" +
-                               oResponsable.correo + "','" +
-                               oResponsable.estado + "'";
+            bool tienePassword = !string.IsNullOrEmpty(oResponsable.contrasena);
+            string baseSet = "nombres = '" + oResponsable.nombres + "', " +
+                             "telefono = '" + (oResponsable.telefono ?? "") + "', " +
+                             "correo = '" + (oResponsable.correo ?? "") + "', " +
+                             "estado = '" + (oResponsable.estado ?? "Activo") + "'";
+            string whereClause = " WHERE cedula_resp = '" + oResponsable.cedula_resp + "'";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
+            // Si hay contraseña nueva, intentar actualizarla también
+            if (tienePassword)
             {
-                objEst = null;
-                return true;
+                ConexionBD objEst = new ConexionBD();
+                string conPass = "UPDATE RESPONSABLE SET " + baseSet +
+                                 ", contrasena = '" + oResponsable.contrasena + "'" + whereClause;
+                if (objEst.EjecutarSentencia(conPass, false))
+                { ultimoError = ""; objEst = null; return true; }
+                // Si falla (columna no existe), caer al update sin contraseña
             }
-            else
-            {
-                ultimoError = objEst.Error;
-                objEst = null;
-                return false;
-            }
+
+            // Update sin contraseña (columna no existe aún o no se cambió)
+            ConexionBD objEst2 = new ConexionBD();
+            string sinPass = "UPDATE RESPONSABLE SET " + baseSet + whereClause;
+            if (objEst2.EjecutarSentencia(sinPass, false))
+            { ultimoError = ""; objEst2 = null; return true; }
+
+            ultimoError = objEst2.Error;
+            objEst2 = null;
+            return false;
         }
 
-        // ELIMINAR
         public static bool EliminarResponsable(string cedula_resp)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Eliminar_Responsable '" + cedula_resp + "'";
-
+            string sentencia = "DELETE FROM RESPONSABLE WHERE cedula_resp = '" + cedula_resp + "'";
             if (objEst.EjecutarSentencia(sentencia, false))
-            {
-                objEst = null;
-                return true;
-            }
+            { objEst = null; return true; }
             else
-            {
-                ultimoError = objEst.Error;
-                objEst = null;
-                return false;
-            }
+            { ultimoError = objEst.Error; objEst = null; return false; }
         }
 
-        // LISTAR
         public static List<Responsable> ListarResponsables()
         {
             List<Responsable> lista = new List<Responsable>();
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Listar_Responsables";
-
+            // Primero intentamos con la columna contrasena
+            string sentencia = "SELECT cedula_resp, nombres, telefono, correo, ISNULL(contrasena,'111111') AS contrasena, fecha_registro, estado FROM RESPONSABLE ORDER BY nombres";
             if (objEst.Consultar(sentencia, false))
             {
                 SqlDataReader dr = objEst.Reader;
@@ -92,6 +97,28 @@ namespace NewLife.Data
                         nombres = dr["nombres"].ToString(),
                         telefono = dr["telefono"].ToString(),
                         correo = dr["correo"].ToString(),
+                        contrasena = dr["contrasena"].ToString(),
+                        fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                        estado = dr["estado"].ToString()
+                    });
+                }
+                return lista;
+            }
+            // Fallback: columna contrasena aún no existe en la BD
+            objEst = new ConexionBD();
+            sentencia = "SELECT cedula_resp, nombres, telefono, correo, fecha_registro, estado FROM RESPONSABLE ORDER BY nombres";
+            if (objEst.Consultar(sentencia, false))
+            {
+                SqlDataReader dr = objEst.Reader;
+                while (dr.Read())
+                {
+                    lista.Add(new Responsable()
+                    {
+                        cedula_resp = dr["cedula_resp"].ToString(),
+                        nombres = dr["nombres"].ToString(),
+                        telefono = dr["telefono"].ToString(),
+                        correo = dr["correo"].ToString(),
+                        contrasena = "111111",
                         fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
                         estado = dr["estado"].ToString()
                     });
@@ -100,13 +127,11 @@ namespace NewLife.Data
             return lista;
         }
 
-        // CONSULTAR
         public static Responsable ConsultarResponsable(string cedula_resp)
         {
             Responsable oResponsable = null;
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "EXEC sp_Consultar_Responsable '" + cedula_resp + "'";
-
+            string sentencia = "SELECT cedula_resp, nombres, telefono, correo, ISNULL(contrasena,'111111') AS contrasena, fecha_registro, estado FROM RESPONSABLE WHERE cedula_resp = '" + cedula_resp + "'";
             if (objEst.Consultar(sentencia, false))
             {
                 SqlDataReader dr = objEst.Reader;
@@ -118,6 +143,28 @@ namespace NewLife.Data
                         nombres = dr["nombres"].ToString(),
                         telefono = dr["telefono"].ToString(),
                         correo = dr["correo"].ToString(),
+                        contrasena = dr["contrasena"].ToString(),
+                        fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                        estado = dr["estado"].ToString()
+                    };
+                    return oResponsable;
+                }
+            }
+            // Fallback sin contrasena
+            objEst = new ConexionBD();
+            sentencia = "SELECT cedula_resp, nombres, telefono, correo, fecha_registro, estado FROM RESPONSABLE WHERE cedula_resp = '" + cedula_resp + "'";
+            if (objEst.Consultar(sentencia, false))
+            {
+                SqlDataReader dr = objEst.Reader;
+                if (dr.Read())
+                {
+                    oResponsable = new Responsable()
+                    {
+                        cedula_resp = dr["cedula_resp"].ToString(),
+                        nombres = dr["nombres"].ToString(),
+                        telefono = dr["telefono"].ToString(),
+                        correo = dr["correo"].ToString(),
+                        contrasena = "111111",
                         fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
                         estado = dr["estado"].ToString()
                     };

@@ -11,10 +11,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Domiciliario> lista = DomiciliarioData.ListarDomiciliarios();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         [HttpGet]
@@ -61,6 +58,14 @@ namespace NewLife.Controllers
                 return Ok("Domiciliario eliminado exitosamente.");
             else
                 return BadRequest(DomiciliarioData.ultimoError);
+        }
+
+        [HttpPost]
+        [Route("api/domiciliario/cleanup")]
+        public IHttpActionResult Cleanup()
+        {
+            string resultado = DomiciliarioData.LimpiarDomiciliariosPrueba();
+            return Ok(resultado);
         }
     }
 }

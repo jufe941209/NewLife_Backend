@@ -68,7 +68,6 @@ namespace NewLife.Controllers
         }
 
         // DELETE api/detallefactura/1
-
         [HttpDelete]
         public IHttpActionResult Delete(int id)
         {
@@ -77,6 +76,15 @@ namespace NewLife.Controllers
                 return Ok("Detalle de factura eliminado exitosamente.");
             else
                 return BadRequest(DetalleFacturaData.ultimoError);
+        }
+
+        // POST api/detallefactura/migrar-precio
+        [HttpPost]
+        [Route("api/detallefactura/migrar-precio")]
+        public IHttpActionResult MigrarPrecio()
+        {
+            string resultado = DetalleFacturaData.MigrarPrecioUnitario();
+            return Ok(resultado);
         }
     }
 }

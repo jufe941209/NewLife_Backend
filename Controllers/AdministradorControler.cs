@@ -1,4 +1,4 @@
-﻿using NewLife.Data;
+using NewLife.Data;
 using NewLife.Models;
 using System.Collections.Generic;
 using System.Web.Http;
@@ -12,10 +12,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Administrador> lista = AdministradorData.ListarAdministradores();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         // GET api/administrador/1001234567
@@ -40,7 +37,7 @@ namespace NewLife.Controllers
             if (resultado)
                 return Ok("Administrador registrado exitosamente.");
             else
-                return BadRequest("No se pudo registrar el administrador.");
+                return BadRequest(AdministradorData.ultimoError);
         }
 
         // PUT api/administrador
@@ -54,7 +51,7 @@ namespace NewLife.Controllers
             if (resultado)
                 return Ok("Administrador actualizado exitosamente.");
             else
-                return BadRequest("No se pudo actualizar el administrador.");
+                return BadRequest(AdministradorData.ultimoError);
         }
 
         // DELETE api/administrador/1001234567
@@ -65,7 +62,7 @@ namespace NewLife.Controllers
             if (resultado)
                 return Ok("Administrador eliminado exitosamente.");
             else
-                return BadRequest("No se pudo eliminar el administrador.");
+                return BadRequest(AdministradorData.ultimoError);
         }
     }
 }
