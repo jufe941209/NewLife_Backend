@@ -12,6 +12,7 @@ namespace NewLife
         protected void Application_Start()
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);
+            NewLife.Data.ResponsableData.MigrarContrasena();
         }
     }
 }

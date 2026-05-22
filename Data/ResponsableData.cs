@@ -10,6 +10,16 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
+        public static void MigrarContrasena()
+        {
+            ConexionBD obj = new ConexionBD();
+            string sentencia =
+                "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'contrasena' AND Object_ID = OBJECT_ID(N'RESPONSABLE')) " +
+                "BEGIN ALTER TABLE RESPONSABLE ADD contrasena VARCHAR(255) NULL END; " +
+                "UPDATE RESPONSABLE SET contrasena = '11111' WHERE contrasena IS NULL OR contrasena = ''";
+            obj.EjecutarSentencia(sentencia, false);
+        }
+
         public static bool InsertarResponsable(Responsable oResponsable)
         {
             string contrasena = string.IsNullOrEmpty(oResponsable.contrasena) ? "111111" : oResponsable.contrasena;

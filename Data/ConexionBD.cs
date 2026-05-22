@@ -56,17 +56,16 @@ namespace ApiEjemplo.Data
 
         private bool AbrirConexion()
         {
-
             try
             {
-                //strCadenaCnx = "Data Source=localhost\\MSSQLSERVER01;Initial Catalog=db_newLife;Integrated Security=True";
-                strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=db_newLife;Persist Security Info=False;User ID=usuario_backend;Password=Ju.1013654544;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;";
-                // Data source equivale en este caso al nombre del servidor de base de datos
-                // Catalog= equivale al nombre de la base de datos a la que se va a conectar en mi caso la base de datos se llama db_newLife
-                //strCadenaCnx = "workstation id = BDACA2503680.mssql.somee.com; packet size = 4096; user id = adalcar26_SQLLogin_1; pwd = ao9568obaw; data source = BDACA2503680.mssql.somee.com; persist security info = False; initial catalog = BDACA2503680";
-                //strCadenaCnx = "workstation id=DBPRUEBAS2024.mssql.somee.com;packet size=4096;user id=adalcar26_SQLLogin_1;pwd=ao9568obaw;data source=DBPRUEBAS2024.mssql.somee.com;persist security info=False;initial catalog=DBPRUEBAS2024;TrustServerCertificate=True";
+                strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=db_newLife;Persist Security Info=False;" +
+                               "User ID=usuario_backend;Password=Ju.1013654544;" +
+                               "MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;" +
+                               "Connection Timeout=30;ConnectRetryCount=3;ConnectRetryInterval=10;";
 
-                objCnnBD.ConnectionString = strCadenaCnx;
+                // Siempre crear una nueva conexion para evitar reutilizar conexiones cerradas o caducadas
+                objCnnBD = new SqlConnection(strCadenaCnx);
+                objCmdBD = new SqlCommand();
                 objCnnBD.Open();
                 blnBDAbierta = true;
                 return true;
@@ -77,7 +76,6 @@ namespace ApiEjemplo.Data
                 strError = "Error al abrir la conexion -" + ex.Message;
                 return false;
             }
-
         }
         #endregion
         #region "Metodos Publicos"
@@ -176,23 +174,21 @@ namespace ApiEjemplo.Data
         }
         public void CerrarConexion()
         {
+            try { objCmdBD = null; } catch { }
             try
             {
-                objCmdBD = null; //Destruye objeto Command
-            }
-            catch (Exception ex)
-            {
-                strError = "Falla en cerrar Command -" + ex.Message;
-            }
-            try
-            {
-                objCnnBD.Close(); //Cierra la conexión
-                objCnnBD = null; //Destruye en la emmoria
+                if (objCnnBD != null)
+                {
+                    objCnnBD.Close();
+                    objCnnBD.Dispose();
+                    objCnnBD = null;
+                }
             }
             catch (Exception ex)
             {
                 strError = "Falla en cerrar conexión -" + ex.Message;
             }
+            blnBDAbierta = false;
         }
         public bool LlenarDataSet(string NombreTabla, string SentenciaSQL, bool blnCon_Parametros)
         {
