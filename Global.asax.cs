@@ -13,6 +13,8 @@ namespace NewLife
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);
             NewLife.Data.ResponsableData.MigrarContrasena();
+            NewLife.Data.ProductoData.MigrarDescuento();
+            NewLife.Data.CategoriaData.MigrarCategorias();
         }
     }
 }

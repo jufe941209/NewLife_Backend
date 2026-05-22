@@ -21,6 +21,7 @@ namespace NewLife.Models
         public string temperatura_uso { get; set; }                // varchar(10) nullable ✅
         public int numero_categoria { get; set; }                  // int ✅
         public int id_tipo_producto { get; set; }
+        public decimal descuento { get; set; }                     // decimal(5,2) — porcentaje 0-100
 
     }
 }

@@ -10,6 +10,37 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
+        public static void MigrarCategorias()
+        {
+            var categorias = new string[]
+            {
+                "Bolsas", "Cajas Cartón Kraft", "Cartones y papel germinable",
+                "Cubiertos", "Germinables", "Otros productos",
+                "Platos y vajillas", "Tapas", "vasos, contenedores", "Bowls y portacomidas"
+            };
+            foreach (var nombre in categorias)
+            {
+                ConexionBD obj = new ConexionBD();
+                string sentencia = "IF NOT EXISTS (SELECT * FROM CATEGORIA WHERE nombre = '" +
+                                   nombre.Replace("'", "''") + "') " +
+                                   "INSERT INTO CATEGORIA (nombre, descripcion) VALUES ('" +
+                                   nombre.Replace("'", "''") + "', '')";
+                obj.EjecutarSentencia(sentencia, false);
+            }
+            // Eliminar categorías antiguas que no tengan productos asociados y no estén en la lista nueva
+            string nombresIn = string.Join(",", new string[]
+            {
+                "'Bolsas'","'Cajas Cartón Kraft'","'Cartones y papel germinable'",
+                "'Cubiertos'","'Germinables'","'Otros productos'",
+                "'Platos y vajillas'","'Tapas'","'vasos, contenedores'","'Bowls y portacomidas'"
+            });
+            ConexionBD objDel = new ConexionBD();
+            objDel.EjecutarSentencia(
+                "DELETE FROM CATEGORIA WHERE nombre NOT IN (" + nombresIn + ") " +
+                "AND numero_categoria NOT IN (SELECT DISTINCT numero_categoria FROM PRODUCTO WHERE numero_categoria IS NOT NULL)",
+                false);
+        }
+
         public static bool InsertarCategoria(Categoria oCategoria)
         {
             ConexionBD objEst = new ConexionBD();

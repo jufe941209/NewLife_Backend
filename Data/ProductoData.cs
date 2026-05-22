@@ -15,7 +15,7 @@ namespace NewLife.Data
         public static bool InsertarProducto(Producto oProducto)
         {
             ConexionBD objEst = new ConexionBD();
-            string sentencia = "INSERT INTO PRODUCTO (codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, precio, capacidad, temperatura_uso, numero_categoria, id_tipo_producto, fecha_registro, estado) VALUES ('" +
+            string sentencia = "INSERT INTO PRODUCTO (codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, precio, descuento, capacidad, temperatura_uso, numero_categoria, id_tipo_producto, fecha_registro, estado) VALUES ('" +
                                oProducto.codigo_prod + "','" +
                                oProducto.nombres + "','" +
                                (oProducto.descripcion ?? "") + "'," +
@@ -23,6 +23,7 @@ namespace NewLife.Data
                                oProducto.stock_real + ",'" +
                                (oProducto.img_url ?? "") + "'," +
                                oProducto.precio.ToString(CultureInfo.InvariantCulture) + "," +
+                               oProducto.descuento.ToString(CultureInfo.InvariantCulture) + "," +
                                (!string.IsNullOrEmpty(oProducto.capacidad) ? "'" + oProducto.capacidad + "'" : "NULL") + "," +
                                (!string.IsNullOrEmpty(oProducto.temperatura_uso) ? "'" + oProducto.temperatura_uso + "'" : "NULL") + "," +
                                oProducto.numero_categoria + "," +
@@ -52,6 +53,7 @@ namespace NewLife.Data
                                "stock_real = " + oProducto.stock_real + ", " +
                                "img_url = '" + (oProducto.img_url ?? "") + "', " +
                                "precio = " + oProducto.precio.ToString(CultureInfo.InvariantCulture) + ", " +
+                               "descuento = " + oProducto.descuento.ToString(CultureInfo.InvariantCulture) + ", " +
                                "estado = '" + (oProducto.estado ?? "Activo") + "', " +
                                "capacidad = " + (!string.IsNullOrEmpty(oProducto.capacidad) ? "'" + oProducto.capacidad.Replace("'", "''") + "'" : "NULL") + ", " +
                                "temperatura_uso = " + (!string.IsNullOrEmpty(oProducto.temperatura_uso) ? "'" + oProducto.temperatura_uso.Replace("'", "''") + "'" : "NULL") + ", " +
@@ -97,7 +99,7 @@ namespace NewLife.Data
             List<Producto> lista = new List<Producto>();
             ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, " +
-                               "fecha_registro, precio, estado, capacidad, " +
+                               "fecha_registro, precio, ISNULL(descuento,0) AS descuento, estado, capacidad, " +
                                "temperatura_uso, numero_categoria, id_tipo_producto FROM PRODUCTO ORDER BY nombres";
 
             if (objEst.Consultar(sentencia, false))
@@ -116,6 +118,7 @@ namespace NewLife.Data
                         fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
                         fecha_ultima_modificacion = null,
                         precio = Convert.ToDecimal(dr["precio"]),
+                        descuento = Convert.ToDecimal(dr["descuento"]),
                         estado = dr["estado"].ToString(),
                         capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
                         temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
@@ -133,7 +136,7 @@ namespace NewLife.Data
             Producto oProducto = null;
             ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, " +
-                               "fecha_registro, precio, estado, capacidad, " +
+                               "fecha_registro, precio, ISNULL(descuento,0) AS descuento, estado, capacidad, " +
                                "temperatura_uso, numero_categoria, id_tipo_producto FROM PRODUCTO " +
                                "WHERE codigo_prod = '" + codigo_prod.Replace("'", "''") + "'";
 
@@ -153,6 +156,7 @@ namespace NewLife.Data
                         fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
                         fecha_ultima_modificacion = null,
                         precio = Convert.ToDecimal(dr["precio"]),
+                        descuento = Convert.ToDecimal(dr["descuento"]),
                         estado = dr["estado"].ToString(),
                         capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
                         temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
@@ -178,6 +182,16 @@ namespace NewLife.Data
                 ultimoError = obj.Error;
                 return false;
             }
+        }
+
+        // MIGRACIÓN: añade columna descuento si no existe
+        public static void MigrarDescuento()
+        {
+            ConexionBD obj = new ConexionBD();
+            string sentencia =
+                "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'descuento' AND Object_ID = OBJECT_ID(N'PRODUCTO')) " +
+                "BEGIN ALTER TABLE PRODUCTO ADD descuento DECIMAL(5,2) NOT NULL DEFAULT 0 END";
+            obj.EjecutarSentencia(sentencia, false);
         }
 
         // MIGRACIÓN: añade columna stock_real si no existe
