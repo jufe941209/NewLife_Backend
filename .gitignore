@@ -4,3 +4,5 @@ obj/
 packages/
 *.user
 *.suo
+Web.config
+.claude/
