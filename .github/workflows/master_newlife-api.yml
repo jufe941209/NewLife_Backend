@@ -28,23 +28,23 @@ jobs:
         run: nuget restore NewLife.csproj -PackagesDirectory packages
 
       - name: Build with MSBuild (FileSystem publish)
-        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:publishUrl="${{ github.workspace }}\published" /p:DeleteExistingFiles=True /p:SkipInvalidConfigurations=true
+        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl=published /p:DeleteExistingFiles=True /p:SkipInvalidConfigurations=true
 
       - name: List build output
         run: |
-          if (Test-Path "${{ github.workspace }}\published") {
-            Write-Host "=== published dir contents ==="
-            dir "${{ github.workspace }}\published"
+          if (Test-Path "published") {
+            Write-Host "=== published dir ==="
+            dir published
           } else {
-            Write-Host "published dir NOT found, listing workspace:"
-            dir "${{ github.workspace }}"
+            Write-Host "published dir NOT found - listing workspace:"
+            dir
           }
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: net-app
-          path: "${{ github.workspace }}\\published"
+          path: published
 
   deploy:
     runs-on: windows-latest
