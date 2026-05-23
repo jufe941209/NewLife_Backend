@@ -13,5 +13,6 @@ namespace NewLife.Models
         public DateTime fecha_registro { get; set; }  // date ✅
         public string disponibilidad { get; set; }    // varchar(15) ✅
         public string estado { get; set; }            // varchar(10) ✅
+        public string contrasena { get; set; }        // varchar(100)
     }
 }

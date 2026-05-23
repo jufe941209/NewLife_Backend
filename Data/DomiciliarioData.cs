@@ -34,6 +34,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oDomiciliario.telefono ?? "");
                 obj.AgregarParametro(ParameterDirection.Input, "@disponibilidad", SqlDbType.VarChar, 20, oDomiciliario.disponibilidad ?? "Disponible");
                 obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oDomiciliario.estado ?? "Activo");
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 100, oDomiciliario.contrasena ?? "111111");
                 if (obj.EjecutarSentencia("sp_Actualizar_Domiciliario", true))
                     return true;
                 ultimoError = obj.Error;
@@ -111,7 +112,8 @@ namespace NewLife.Data
                 telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
                 fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
                 disponibilidad = dr["disponibilidad"] == DBNull.Value ? "Disponible" : dr["disponibilidad"].ToString(),
-                estado = dr["estado"] == DBNull.Value ? "Activo" : dr["estado"].ToString()
+                estado = dr["estado"] == DBNull.Value ? "Activo" : dr["estado"].ToString(),
+                contrasena = dr["contrasena"] == DBNull.Value ? "111111" : dr["contrasena"].ToString()
             };
         }
     }
