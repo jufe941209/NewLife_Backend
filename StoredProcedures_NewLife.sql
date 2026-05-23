@@ -307,6 +307,23 @@ BEGIN
     FROM DETALLE_FACTURA WHERE num_f_codigo=@num_f_codigo
 END
 GO
+CREATE OR ALTER PROCEDURE sp_Listar_DetalleFactura
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT num_f_codigo,cantidad,descuento_porcentaje,numero_factura,codigo_prod,precio_unitario
+    FROM DETALLE_FACTURA
+END
+GO
+CREATE OR ALTER PROCEDURE sp_Listar_DetalleFactura_PorFactura
+    @numero_factura VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT num_f_codigo,cantidad,descuento_porcentaje,numero_factura,codigo_prod,precio_unitario
+    FROM DETALLE_FACTURA WHERE numero_factura=@numero_factura
+END
+GO
 
 -- ============================================================
 -- ADMINISTRADOR
