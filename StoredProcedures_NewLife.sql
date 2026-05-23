@@ -1,9 +1,66 @@
 -- ============================================================
 -- STORED PROCEDURES - NewLife
--- Incluye: SPs faltantes + actualizacion de sp_Listar_Productos
--- (el SP existente no tenia columnas nuevas: descuento, stock_real, capacidad, temperatura_uso)
+-- Incluye: SPs faltantes + correcciones de SPs existentes
 -- Ejecutar en Azure SQL db_newLife
 -- ============================================================
+
+-- ============================================================
+-- CORRECCIONES DE SPs EXISTENTES (parametros desactualizados)
+-- ============================================================
+GO
+CREATE OR ALTER PROCEDURE sp_Insertar_Producto
+    @codigo_prod VARCHAR(20), @nombres VARCHAR(100), @descripcion VARCHAR(500),
+    @stock_min INT, @stock_real INT, @img_url VARCHAR(500),
+    @precio DECIMAL(10,2), @descuento DECIMAL(5,2),
+    @capacidad VARCHAR(50), @temperatura_uso VARCHAR(50),
+    @numero_categoria INT, @id_tipo_producto INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO PRODUCTO (codigo_prod,nombres,descripcion,stock_min,stock_real,img_url,precio,descuento,capacidad,temperatura_uso,numero_categoria,id_tipo_producto,fecha_registro,estado)
+    VALUES (@codigo_prod,@nombres,@descripcion,@stock_min,@stock_real,@img_url,@precio,@descuento,@capacidad,@temperatura_uso,@numero_categoria,@id_tipo_producto,GETDATE(),'Activo')
+END
+GO
+CREATE OR ALTER PROCEDURE sp_Insertar_Responsable
+    @cedula_resp VARCHAR(20), @nombres VARCHAR(100),
+    @telefono VARCHAR(20), @correo VARCHAR(100), @contrasena VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO RESPONSABLE (cedula_resp,nombres,telefono,correo,contrasena,fecha_registro,estado)
+    VALUES (@cedula_resp,@nombres,@telefono,@correo,@contrasena,GETDATE(),'Activo')
+END
+GO
+CREATE OR ALTER PROCEDURE sp_Insertar_DetalleFactura
+    @cantidad INT, @descuento_porcentaje DECIMAL(5,2),
+    @numero_factura VARCHAR(20), @codigo_prod VARCHAR(20), @precio_unitario DECIMAL(10,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO DETALLE_FACTURA (cantidad,descuento_porcentaje,numero_factura,codigo_prod,precio_unitario)
+    VALUES (@cantidad,@descuento_porcentaje,@numero_factura,@codigo_prod,@precio_unitario)
+END
+GO
+CREATE OR ALTER PROCEDURE sp_Insertar_Administrador
+    @cedula_adm VARCHAR(20), @correo VARCHAR(100),
+    @contrasena VARCHAR(255), @nombres VARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO ADMINISTRADOR (cedula_adm,correo,contrasena,nombres,fecha_registro,estado)
+    VALUES (@cedula_adm,@correo,@contrasena,@nombres,GETDATE(),'Activo')
+END
+GO
+CREATE OR ALTER PROCEDURE sp_Insertar_Transporte
+    @cedula_domi VARCHAR(20), @placa VARCHAR(20),
+    @tipo VARCHAR(50), @descripcion VARCHAR(200), @estado VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO TRANSPORTE (cedula_domi,placa,tipo,descripcion,estado)
+    VALUES (@cedula_domi,@placa,@tipo,@descripcion,@estado)
+END
+GO
 
 -- sp_Listar_Productos: actualizar para incluir todas las columnas actuales
 GO
