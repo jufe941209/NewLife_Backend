@@ -28,17 +28,35 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore NewLife.csproj -PackagesDirectory packages
 
-      - name: Build with MSBuild (FileSystem publish)
-        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl=published /p:DeleteExistingFiles=True /p:SkipInvalidConfigurations=true
+      - name: Build project
+        run: msbuild NewLife.csproj /p:Configuration=Release /p:SkipInvalidConfigurations=true
 
-      - name: Verify published output
+      - name: Create deploy package
         run: |
-          if (Test-Path "published") {
-            Write-Host "OK - published dir exists"
-            dir published
-          } else {
-            Write-Host "ERROR - published dir not found"; dir; exit 1
+          $dest = "deploy"
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+
+          # Core runtime files
+          Copy-Item -Path "bin" -Destination "$dest\bin" -Recurse -Force
+          Copy-Item -Path "web.config" -Destination "$dest\" -Force
+          Copy-Item -Path "Global.asax" -Destination "$dest\" -Force
+
+          # Optional: static content if it exists
+          foreach ($folder in @("Content","Scripts","App_Data","fonts","images")) {
+            if (Test-Path $folder) {
+              Copy-Item -Path $folder -Destination "$dest\$folder" -Recurse -Force
+            }
           }
+
+          # Azure config
+          if (Test-Path "applicationHost.xdt") {
+            Copy-Item -Path "applicationHost.xdt" -Destination "$dest\" -Force
+          }
+
+          Write-Host "=== deploy dir ==="
+          dir $dest
+          Write-Host "=== deploy\bin (first 15) ==="
+          dir "$dest\bin" | Select-Object -First 15
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -53,4 +71,4 @@ jobs:
         with:
           app-name: 'newlife-api'
           slot-name: 'Production'
-          package: published
+          package: deploy
