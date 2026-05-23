@@ -67,7 +67,6 @@ namespace ApiEjemplo.Data
                 try
                 {
                     objCnnBD = new SqlConnection(strCadenaCnx);
-                    objCmdBD = new SqlCommand();
                     objCnnBD.Open();
                     blnBDAbierta = true;
                     return true;
