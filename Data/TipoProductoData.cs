@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -10,25 +11,55 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
+        public static bool InsertarTipoProducto(TipoProducto oTipoProducto)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@nombre", SqlDbType.VarChar, 100, oTipoProducto.nombre);
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 300, oTipoProducto.descripcion ?? "");
+                if (obj.EjecutarSentencia("sp_Insertar_TipoProducto", true))
+                    return true;
+                ultimoError = obj.Error;
+                return false;
+            }
+        }
+
+        public static bool ActualizarTipoProducto(TipoProducto oTipoProducto)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@id_tipo_producto", SqlDbType.Int, 0, oTipoProducto.id_tipo_producto);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombre", SqlDbType.VarChar, 100, oTipoProducto.nombre);
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 300, oTipoProducto.descripcion ?? "");
+                if (obj.EjecutarSentencia("sp_Actualizar_TipoProducto", true))
+                    return true;
+                ultimoError = obj.Error;
+                return false;
+            }
+        }
+
+        public static bool EliminarTipoProducto(int id_tipo_producto)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@id_tipo_producto", SqlDbType.Int, 0, id_tipo_producto);
+                if (obj.EjecutarSentencia("sp_Eliminar_TipoProducto", true))
+                    return true;
+                ultimoError = obj.Error;
+                return false;
+            }
+        }
+
         public static List<TipoProducto> ListarTiposProducto()
         {
             List<TipoProducto> lista = new List<TipoProducto>();
-            string sentencia = "SELECT id_tipo_producto, nombre, descripcion FROM TIPO_PRODUCTO ORDER BY nombre";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_TiposProducto", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new TipoProducto()
-                        {
-                            id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"]),
-                            nombre = dr["nombre"].ToString(),
-                            descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString()
-                        });
-                    }
+                        lista.Add(MapTipoProducto(dr));
                 }
             }
             return lista;
@@ -36,70 +67,27 @@ namespace NewLife.Data
 
         public static TipoProducto ConsultarTipoProducto(int id_tipo_producto)
         {
-            TipoProducto oTipoProducto = null;
-            string sentencia = "SELECT id_tipo_producto, nombre, descripcion FROM TIPO_PRODUCTO WHERE id_tipo_producto = " + id_tipo_producto;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@id_tipo_producto", SqlDbType.Int, 0, id_tipo_producto);
+                if (obj.Consultar("sp_Consultar_TipoProducto", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oTipoProducto = new TipoProducto()
-                        {
-                            id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"]),
-                            nombre = dr["nombre"].ToString(),
-                            descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString()
-                        };
-                    }
+                        return MapTipoProducto(dr);
                 }
             }
-            return oTipoProducto;
+            return null;
         }
 
-        public static bool InsertarTipoProducto(TipoProducto oTipoProducto)
+        private static TipoProducto MapTipoProducto(SqlDataReader dr)
         {
-            string sentencia = "INSERT INTO TIPO_PRODUCTO (nombre, descripcion) VALUES ('" +
-                               oTipoProducto.nombre.Replace("'", "''") + "','" +
-                               (oTipoProducto.descripcion ?? "").Replace("'", "''") + "')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            return new TipoProducto()
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
-                    return true;
-                ultimoError = objEst.Error;
-                return false;
-            }
-        }
-
-        public static bool ActualizarTipoProducto(TipoProducto oTipoProducto)
-        {
-            string sentencia = "UPDATE TIPO_PRODUCTO SET nombre = '" +
-                               oTipoProducto.nombre.Replace("'", "''") + "', descripcion = '" +
-                               (oTipoProducto.descripcion ?? "").Replace("'", "''") +
-                               "' WHERE id_tipo_producto = " + oTipoProducto.id_tipo_producto;
-
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                if (objEst.EjecutarSentencia(sentencia, false))
-                    return true;
-                ultimoError = objEst.Error;
-                return false;
-            }
-        }
-
-        public static bool EliminarTipoProducto(int id_tipo_producto)
-        {
-            string sentencia = "DELETE FROM TIPO_PRODUCTO WHERE id_tipo_producto = " + id_tipo_producto;
-
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                if (objEst.EjecutarSentencia(sentencia, false))
-                    return true;
-                ultimoError = objEst.Error;
-                return false;
-            }
+                id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"]),
+                nombre = dr["nombre"].ToString(),
+                descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString()
+            };
         }
     }
 }

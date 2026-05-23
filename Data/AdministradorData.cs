@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -12,47 +13,42 @@ namespace NewLife.Data
 
         public static bool InsertarAdministrador(Administrador oAdministrador)
         {
-            string sentencia = "INSERT INTO ADMINISTRADOR (cedula_adm, correo, contrasena, nombres, fecha_registro, estado) VALUES ('" +
-                               oAdministrador.cedula_adm.Replace("'", "''") + "','" +
-                               oAdministrador.correo.Replace("'", "''") + "','" +
-                               oAdministrador.contrasena.Replace("'", "''") + "','" +
-                               oAdministrador.nombres.Replace("'", "''") + "',GETDATE(),'Activo')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, oAdministrador.cedula_adm);
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oAdministrador.correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, oAdministrador.contrasena);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oAdministrador.nombres);
+                if (obj.EjecutarSentencia("sp_Insertar_Administrador", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarAdministrador(Administrador oAdministrador)
         {
-            string sentencia = "UPDATE ADMINISTRADOR SET " +
-                               "correo = '" + oAdministrador.correo.Replace("'", "''") + "', " +
-                               "nombres = '" + oAdministrador.nombres.Replace("'", "''") + "', " +
-                               "estado = '" + (oAdministrador.estado ?? "Activo") + "' " +
-                               "WHERE cedula_adm = '" + oAdministrador.cedula_adm.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, oAdministrador.cedula_adm);
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oAdministrador.correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oAdministrador.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oAdministrador.estado ?? "Activo");
+                if (obj.EjecutarSentencia("sp_Actualizar_Administrador", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarAdministrador(string cedula_adm)
         {
-            string sentencia = "DELETE FROM ADMINISTRADOR WHERE cedula_adm = '" + cedula_adm.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, cedula_adm);
+                if (obj.EjecutarSentencia("sp_Eliminar_Administrador", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -60,25 +56,13 @@ namespace NewLife.Data
         public static List<Administrador> ListarAdministradores()
         {
             List<Administrador> lista = new List<Administrador>();
-            string sentencia = "SELECT cedula_adm, correo, contrasena, nombres, fecha_registro, estado FROM ADMINISTRADOR ORDER BY nombres";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Administradores", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Administrador()
-                        {
-                            cedula_adm = dr["cedula_adm"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            contrasena = dr["contrasena"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            estado = dr["estado"].ToString()
-                        });
-                    }
+                        lista.Add(MapAdministrador(dr));
                 }
             }
             return lista;
@@ -86,30 +70,30 @@ namespace NewLife.Data
 
         public static Administrador ConsultarAdministrador(string cedula_adm)
         {
-            Administrador oAdministrador = null;
-            string sentencia = "SELECT cedula_adm, correo, contrasena, nombres, fecha_registro, estado FROM ADMINISTRADOR WHERE cedula_adm = '" +
-                               cedula_adm.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, cedula_adm);
+                if (obj.Consultar("sp_Consultar_Administrador", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oAdministrador = new Administrador()
-                        {
-                            cedula_adm = dr["cedula_adm"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            contrasena = dr["contrasena"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            estado = dr["estado"].ToString()
-                        };
-                    }
+                        return MapAdministrador(dr);
                 }
             }
-            return oAdministrador;
+            return null;
+        }
+
+        private static Administrador MapAdministrador(SqlDataReader dr)
+        {
+            return new Administrador()
+            {
+                cedula_adm = dr["cedula_adm"].ToString(),
+                correo = dr["correo"].ToString(),
+                contrasena = dr["contrasena"].ToString(),
+                nombres = dr["nombres"].ToString(),
+                fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                estado = dr["estado"].ToString()
+            };
         }
     }
 }

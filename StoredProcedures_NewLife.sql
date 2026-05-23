@@ -1,43 +1,28 @@
 -- ============================================================
 -- STORED PROCEDURES FALTANTES - NewLife
--- Ejecutar en Azure SQL: db_newLife
--- Usa CREATE OR ALTER (seguro si ya existe alguno)
+-- Solo los que NO existen: Consultar, Actualizar, Eliminar
+-- + especiales: Login, CambiarContrasena, ExisteCorreo, ReducirStock, Verificacion
+-- Ejecutar en Azure SQL db_newLife
 -- ============================================================
 
 -- ============================================================
 -- CLIENTE
 -- ============================================================
 GO
-CREATE OR ALTER PROCEDURE sp_Insertar_Cliente
-    @numero_identificacion VARCHAR(20), @nombres VARCHAR(100),
-    @tipo_documento VARCHAR(10), @direccion VARCHAR(200),
-    @telefono VARCHAR(20), @correo VARCHAR(100),
-    @contrasena VARCHAR(255), @tipo_cliente VARCHAR(20),
-    @estado VARCHAR(20), @cedula_adm VARCHAR(20)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO CLIENTE (numero_identificacion,nombres,tipo_documento,direccion,telefono,correo,contrasena,tipo_cliente,estado,fecha_registro,cedula_adm)
-    VALUES (@numero_identificacion,@nombres,@tipo_documento,@direccion,@telefono,@correo,@contrasena,@tipo_cliente,@estado,GETDATE(),@cedula_adm)
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Cliente
     @numero_identificacion VARCHAR(20), @nombres VARCHAR(100),
     @tipo_documento VARCHAR(10), @direccion VARCHAR(200),
     @telefono VARCHAR(20), @correo VARCHAR(100),
-    @tipo_cliente VARCHAR(20), @estado VARCHAR(20),
-    @cedula_adm VARCHAR(20)
+    @tipo_cliente VARCHAR(20), @estado VARCHAR(20), @cedula_adm VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
-    UPDATE CLIENTE SET nombres=@nombres, tipo_documento=@tipo_documento,
-        direccion=@direccion, telefono=@telefono, correo=@correo,
-        tipo_cliente=@tipo_cliente, estado=@estado, cedula_adm=@cedula_adm
+    UPDATE CLIENTE SET nombres=@nombres,tipo_documento=@tipo_documento,
+        direccion=@direccion,telefono=@telefono,correo=@correo,
+        tipo_cliente=@tipo_cliente,estado=@estado,cedula_adm=@cedula_adm
     WHERE numero_identificacion=@numero_identificacion
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Cliente
     @numero_identificacion VARCHAR(20)
 AS
@@ -46,27 +31,26 @@ BEGIN
     DELETE FROM CLIENTE WHERE numero_identificacion=@numero_identificacion
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Cliente
     @numero_identificacion VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT numero_identificacion,nombres,tipo_documento,direccion,telefono,correo,fecha_registro,tipo_cliente,estado,cedula_adm
+    SELECT numero_identificacion,nombres,tipo_documento,direccion,telefono,correo,
+           fecha_registro,tipo_cliente,estado,cedula_adm
     FROM CLIENTE WHERE numero_identificacion=@numero_identificacion
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Login_Cliente
     @correo VARCHAR(100), @contrasena VARCHAR(255)
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT numero_identificacion,nombres,tipo_documento,direccion,telefono,correo,fecha_registro,tipo_cliente,estado,cedula_adm
+    SELECT numero_identificacion,nombres,tipo_documento,direccion,telefono,correo,
+           fecha_registro,tipo_cliente,estado,cedula_adm
     FROM CLIENTE WHERE correo=@correo AND contrasena=@contrasena AND estado='Activo'
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_CambiarContrasena_Cliente
     @correo VARCHAR(100), @nuevaContrasena VARCHAR(255)
 AS
@@ -75,7 +59,6 @@ BEGIN
     UPDATE CLIENTE SET contrasena=@nuevaContrasena WHERE correo=@correo
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_ExisteCorreo_Cliente
     @correo VARCHAR(100)
 AS
@@ -88,18 +71,6 @@ GO
 -- ============================================================
 -- RESPONSABLE
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_Responsable
-    @cedula_resp VARCHAR(20), @nombres VARCHAR(100),
-    @telefono VARCHAR(20), @correo VARCHAR(100),
-    @contrasena VARCHAR(255)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO RESPONSABLE (cedula_resp,nombres,telefono,correo,contrasena,fecha_registro,estado)
-    VALUES (@cedula_resp,@nombres,@telefono,@correo,@contrasena,GETDATE(),'Activo')
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Responsable
     @cedula_resp VARCHAR(20), @nombres VARCHAR(100),
     @telefono VARCHAR(20), @correo VARCHAR(100),
@@ -113,7 +84,6 @@ BEGIN
         UPDATE RESPONSABLE SET nombres=@nombres,telefono=@telefono,correo=@correo,estado=@estado WHERE cedula_resp=@cedula_resp
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Responsable
     @cedula_resp VARCHAR(20)
 AS
@@ -122,7 +92,6 @@ BEGIN
     DELETE FROM RESPONSABLE WHERE cedula_resp=@cedula_resp
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Responsable
     @cedula_resp VARCHAR(20)
 AS
@@ -132,7 +101,6 @@ BEGIN
     FROM RESPONSABLE WHERE cedula_resp=@cedula_resp
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_CambiarContrasena_Responsable
     @correo VARCHAR(100), @nuevaContrasena VARCHAR(255)
 AS
@@ -141,7 +109,6 @@ BEGIN
     UPDATE RESPONSABLE SET contrasena=@nuevaContrasena WHERE correo=@correo
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_ExisteCorreo_Responsable
     @correo VARCHAR(100)
 AS
@@ -154,20 +121,6 @@ GO
 -- ============================================================
 -- PRODUCTO
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_Producto
-    @codigo_prod VARCHAR(20), @nombres VARCHAR(100),
-    @descripcion VARCHAR(500), @stock_min INT, @stock_real INT,
-    @img_url VARCHAR(500), @precio DECIMAL(10,2), @descuento DECIMAL(5,2),
-    @capacidad VARCHAR(50), @temperatura_uso VARCHAR(50),
-    @numero_categoria INT, @id_tipo_producto INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO PRODUCTO (codigo_prod,nombres,descripcion,stock_min,stock_real,img_url,precio,descuento,capacidad,temperatura_uso,numero_categoria,id_tipo_producto,fecha_registro,estado)
-    VALUES (@codigo_prod,@nombres,@descripcion,@stock_min,@stock_real,@img_url,@precio,@descuento,@capacidad,@temperatura_uso,@numero_categoria,@id_tipo_producto,GETDATE(),'Activo')
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Producto
     @codigo_prod VARCHAR(20), @nombres VARCHAR(100),
     @descripcion VARCHAR(500), @stock_min INT, @stock_real INT,
@@ -184,7 +137,6 @@ BEGIN
     WHERE codigo_prod=@codigo_prod
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Producto
     @codigo_prod VARCHAR(20)
 AS
@@ -193,7 +145,6 @@ BEGIN
     DELETE FROM PRODUCTO WHERE codigo_prod=@codigo_prod
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Producto
     @codigo_prod VARCHAR(20)
 AS
@@ -205,7 +156,6 @@ BEGIN
     FROM PRODUCTO WHERE codigo_prod=@codigo_prod
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_ReducirStock_Producto
     @codigo_prod VARCHAR(20), @cantidad INT
 AS
@@ -219,17 +169,6 @@ GO
 -- ============================================================
 -- FACTURA_VENTA
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_FacturaVenta
-    @numero_factura VARCHAR(20), @metodo_pago VARCHAR(50),
-    @direccion_envio VARCHAR(200), @cedula_cli VARCHAR(20)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO FACTURA_VENTA (numero_factura,fecha,metodo_pago,estado_pago,direccion_envio,cedula_cli)
-    VALUES (@numero_factura,GETDATE(),@metodo_pago,'Pendiente',@direccion_envio,@cedula_cli)
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_FacturaVenta
     @numero_factura VARCHAR(20), @metodo_pago VARCHAR(50),
     @estado_pago VARCHAR(30), @direccion_envio VARCHAR(200)
@@ -240,7 +179,6 @@ BEGIN
     WHERE numero_factura=@numero_factura
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_FacturaVenta
     @numero_factura VARCHAR(20)
 AS
@@ -250,7 +188,6 @@ BEGIN
     DELETE FROM FACTURA_VENTA WHERE numero_factura=@numero_factura;
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_FacturaVenta
     @numero_factura VARCHAR(20)
 AS
@@ -264,18 +201,6 @@ GO
 -- ============================================================
 -- DETALLE_FACTURA
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_DetalleFactura
-    @cantidad INT, @descuento_porcentaje DECIMAL(5,2),
-    @numero_factura VARCHAR(20), @codigo_prod VARCHAR(20),
-    @precio_unitario DECIMAL(10,2)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO DETALLE_FACTURA (cantidad,descuento_porcentaje,numero_factura,codigo_prod,precio_unitario)
-    VALUES (@cantidad,@descuento_porcentaje,@numero_factura,@codigo_prod,@precio_unitario)
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_DetalleFactura
     @num_f_codigo INT, @cantidad INT,
     @descuento_porcentaje DECIMAL(5,2), @precio_unitario DECIMAL(10,2)
@@ -286,7 +211,6 @@ BEGIN
     WHERE num_f_codigo=@num_f_codigo
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_DetalleFactura
     @num_f_codigo INT
 AS
@@ -295,7 +219,6 @@ BEGIN
     DELETE FROM DETALLE_FACTURA WHERE num_f_codigo=@num_f_codigo
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_DetalleFactura
     @num_f_codigo INT
 AS
@@ -309,28 +232,15 @@ GO
 -- ============================================================
 -- ADMINISTRADOR
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_Administrador
-    @cedula_adm VARCHAR(20), @correo VARCHAR(100),
-    @contrasena VARCHAR(255), @nombres VARCHAR(100)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO ADMINISTRADOR (cedula_adm,correo,contrasena,nombres,fecha_registro,estado)
-    VALUES (@cedula_adm,@correo,@contrasena,@nombres,GETDATE(),'Activo')
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Administrador
     @cedula_adm VARCHAR(20), @correo VARCHAR(100),
     @nombres VARCHAR(100), @estado VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
-    UPDATE ADMINISTRADOR SET correo=@correo,nombres=@nombres,estado=@estado
-    WHERE cedula_adm=@cedula_adm
+    UPDATE ADMINISTRADOR SET correo=@correo,nombres=@nombres,estado=@estado WHERE cedula_adm=@cedula_adm
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Administrador
     @cedula_adm VARCHAR(20)
 AS
@@ -339,7 +249,6 @@ BEGIN
     DELETE FROM ADMINISTRADOR WHERE cedula_adm=@cedula_adm
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Administrador
     @cedula_adm VARCHAR(20)
 AS
@@ -353,16 +262,6 @@ GO
 -- ============================================================
 -- DOMICILIARIO
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_Domiciliario
-    @cedula_domi VARCHAR(20), @nombres VARCHAR(100), @telefono VARCHAR(20)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO DOMICILIARIO (cedula_domi,nombres,telefono,fecha_registro,disponibilidad,estado)
-    VALUES (@cedula_domi,@nombres,@telefono,GETDATE(),'Disponible','Activo')
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Domiciliario
     @cedula_domi VARCHAR(20), @nombres VARCHAR(100),
     @telefono VARCHAR(20), @disponibilidad VARCHAR(20), @estado VARCHAR(20)
@@ -373,7 +272,6 @@ BEGIN
     WHERE cedula_domi=@cedula_domi
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Domiciliario
     @cedula_domi VARCHAR(20)
 AS
@@ -384,7 +282,6 @@ BEGIN
     DELETE FROM DOMICILIARIO WHERE cedula_domi=@cedula_domi;
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Domiciliario
     @cedula_domi VARCHAR(20)
 AS
@@ -398,23 +295,10 @@ GO
 -- ============================================================
 -- DESPACHO
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_Despacho
-    @fecha_despacho DATE, @numero_factura VARCHAR(20),
-    @cc_responsable VARCHAR(20), @cc_domiciliario VARCHAR(20)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO DESPACHO (fecha_despacho,estado,numero_factura,cc_responsable,cc_domiciliario)
-    VALUES (@fecha_despacho,'Pendiente',@numero_factura,
-            NULLIF(@cc_responsable,''),NULLIF(@cc_domiciliario,''))
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Despacho
     @numero_despacho INT, @fecha_despacho DATE,
     @fecha_aprobacion DATETIME, @estado VARCHAR(30),
-    @fecha_entrega DATETIME, @cc_responsable VARCHAR(20),
-    @cc_domiciliario VARCHAR(20)
+    @fecha_entrega DATETIME, @cc_responsable VARCHAR(20), @cc_domiciliario VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -424,7 +308,6 @@ BEGIN
     WHERE numero_despacho=@numero_despacho
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Despacho
     @numero_despacho INT
 AS
@@ -433,13 +316,13 @@ BEGIN
     DELETE FROM DESPACHO WHERE numero_despacho=@numero_despacho
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Despacho
     @numero_despacho INT
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT numero_despacho,fecha_despacho,fecha_aprobacion,estado,fecha_entrega,numero_factura,cc_responsable,cc_domiciliario
+    SELECT numero_despacho,fecha_despacho,fecha_aprobacion,estado,fecha_entrega,
+           numero_factura,cc_responsable,cc_domiciliario
     FROM DESPACHO WHERE numero_despacho=@numero_despacho
 END
 GO
@@ -447,15 +330,6 @@ GO
 -- ============================================================
 -- TIPO_PRODUCTO
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_TipoProducto
-    @nombre VARCHAR(100), @descripcion VARCHAR(300)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO TIPO_PRODUCTO (nombre,descripcion) VALUES (@nombre,@descripcion)
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_TipoProducto
     @id_tipo_producto INT, @nombre VARCHAR(100), @descripcion VARCHAR(300)
 AS
@@ -464,7 +338,6 @@ BEGIN
     UPDATE TIPO_PRODUCTO SET nombre=@nombre,descripcion=@descripcion WHERE id_tipo_producto=@id_tipo_producto
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_TipoProducto
     @id_tipo_producto INT
 AS
@@ -473,7 +346,6 @@ BEGIN
     DELETE FROM TIPO_PRODUCTO WHERE id_tipo_producto=@id_tipo_producto
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_TipoProducto
     @id_tipo_producto INT
 AS
@@ -484,7 +356,7 @@ END
 GO
 
 -- ============================================================
--- TRANSPORTE (sp_Insertar_Transporte YA EXISTE - se omite)
+-- TRANSPORTE
 -- ============================================================
 CREATE OR ALTER PROCEDURE sp_Actualizar_Transporte
     @placa VARCHAR(20), @cedula_domi VARCHAR(20),
@@ -496,7 +368,6 @@ BEGIN
     WHERE placa=@placa
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Transporte
     @placa VARCHAR(20)
 AS
@@ -505,7 +376,6 @@ BEGIN
     DELETE FROM TRANSPORTE WHERE placa=@placa
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Transporte
     @placa VARCHAR(20)
 AS
@@ -518,15 +388,6 @@ GO
 -- ============================================================
 -- CATEGORIA
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_Insertar_Categoria
-    @nombre VARCHAR(100), @descripcion VARCHAR(300)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT INTO CATEGORIA (nombre,descripcion) VALUES (@nombre,@descripcion)
-END
-GO
-
 CREATE OR ALTER PROCEDURE sp_Actualizar_Categoria
     @numero_categoria INT, @nombre VARCHAR(100), @descripcion VARCHAR(300)
 AS
@@ -535,7 +396,6 @@ BEGIN
     UPDATE CATEGORIA SET nombre=@nombre,descripcion=@descripcion WHERE numero_categoria=@numero_categoria
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Eliminar_Categoria
     @numero_categoria INT
 AS
@@ -544,7 +404,6 @@ BEGIN
     DELETE FROM CATEGORIA WHERE numero_categoria=@numero_categoria
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_Consultar_Categoria
     @numero_categoria INT
 AS
@@ -567,7 +426,6 @@ BEGIN
     VALUES (@correo,@codigo,@tipo,GETDATE(),DATEADD(MINUTE,15,GETDATE()),0);
 END
 GO
-
 CREATE OR ALTER PROCEDURE sp_VerificarCodigo
     @correo VARCHAR(255), @codigo VARCHAR(10), @tipo VARCHAR(30)
 AS

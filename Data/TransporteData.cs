@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -12,50 +13,44 @@ namespace NewLife.Data
 
         public static bool InsertarTransporte(Transporte oTransporte)
         {
-            string estado = string.IsNullOrEmpty(oTransporte.estado) ? "Activo" : oTransporte.estado;
-            string sentencia = "INSERT INTO TRANSPORTE (cedula_domi, placa, tipo, descripcion, estado) VALUES ('" +
-                               oTransporte.cedula_domi + "','" +
-                               oTransporte.placa + "','" +
-                               (oTransporte.tipo ?? "") + "','" +
-                               (oTransporte.descripcion ?? "") + "','" +
-                               estado + "')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, oTransporte.cedula_domi);
+                obj.AgregarParametro(ParameterDirection.Input, "@placa", SqlDbType.VarChar, 20, oTransporte.placa);
+                obj.AgregarParametro(ParameterDirection.Input, "@tipo", SqlDbType.VarChar, 50, oTransporte.tipo ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 200, oTransporte.descripcion ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, string.IsNullOrEmpty(oTransporte.estado) ? "Activo" : oTransporte.estado);
+                if (obj.EjecutarSentencia("sp_Insertar_Transporte", true))
                 { ultimoError = ""; return true; }
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarTransporte(Transporte oTransporte)
         {
-            string sentencia = "UPDATE TRANSPORTE SET " +
-                               "cedula_domi = '" + oTransporte.cedula_domi + "', " +
-                               "tipo = '" + (oTransporte.tipo ?? "") + "', " +
-                               "descripcion = '" + (oTransporte.descripcion ?? "") + "', " +
-                               "estado = '" + (oTransporte.estado ?? "Activo") + "' " +
-                               "WHERE placa = '" + oTransporte.placa + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@placa", SqlDbType.VarChar, 20, oTransporte.placa);
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, oTransporte.cedula_domi);
+                obj.AgregarParametro(ParameterDirection.Input, "@tipo", SqlDbType.VarChar, 50, oTransporte.tipo ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 200, oTransporte.descripcion ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oTransporte.estado ?? "Activo");
+                if (obj.EjecutarSentencia("sp_Actualizar_Transporte", true))
                 { ultimoError = ""; return true; }
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarTransporte(string placa)
         {
-            string sentencia = "DELETE FROM TRANSPORTE WHERE placa = '" + placa + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@placa", SqlDbType.VarChar, 20, placa);
+                if (obj.EjecutarSentencia("sp_Eliminar_Transporte", true))
                 { ultimoError = ""; return true; }
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -63,24 +58,13 @@ namespace NewLife.Data
         public static List<Transporte> ListarTransportes()
         {
             List<Transporte> lista = new List<Transporte>();
-            string sentencia = "SELECT cedula_domi, placa, tipo, descripcion, estado FROM TRANSPORTE ORDER BY placa";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Transportes", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Transporte()
-                        {
-                            cedula_domi = dr["cedula_domi"].ToString(),
-                            placa = dr["placa"].ToString(),
-                            tipo = dr["tipo"].ToString(),
-                            descripcion = dr["descripcion"].ToString(),
-                            estado = dr["estado"].ToString()
-                        });
-                    }
+                        lista.Add(MapTransporte(dr));
                 }
             }
             return lista;
@@ -88,28 +72,29 @@ namespace NewLife.Data
 
         public static Transporte ConsultarTransporte(string placa)
         {
-            Transporte oTransporte = null;
-            string sentencia = "SELECT cedula_domi, placa, tipo, descripcion, estado FROM TRANSPORTE WHERE placa = '" + placa + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@placa", SqlDbType.VarChar, 20, placa);
+                if (obj.Consultar("sp_Consultar_Transporte", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oTransporte = new Transporte()
-                        {
-                            cedula_domi = dr["cedula_domi"].ToString(),
-                            placa = dr["placa"].ToString(),
-                            tipo = dr["tipo"].ToString(),
-                            descripcion = dr["descripcion"].ToString(),
-                            estado = dr["estado"].ToString()
-                        };
-                    }
+                        return MapTransporte(dr);
                 }
             }
-            return oTransporte;
+            return null;
+        }
+
+        private static Transporte MapTransporte(SqlDataReader dr)
+        {
+            return new Transporte()
+            {
+                cedula_domi = dr["cedula_domi"].ToString(),
+                placa = dr["placa"].ToString(),
+                tipo = dr["tipo"].ToString(),
+                descripcion = dr["descripcion"].ToString(),
+                estado = dr["estado"].ToString()
+            };
         }
     }
 }

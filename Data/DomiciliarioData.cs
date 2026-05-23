@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -12,56 +13,74 @@ namespace NewLife.Data
 
         public static bool InsertarDomiciliario(Domiciliario oDomiciliario)
         {
-            string sentencia = "INSERT INTO DOMICILIARIO (cedula_domi, nombres, telefono, fecha_registro, disponibilidad, estado) VALUES ('" +
-                               oDomiciliario.cedula_domi.Replace("'", "''") + "','" +
-                               oDomiciliario.nombres.Replace("'", "''") + "','" +
-                               (oDomiciliario.telefono ?? "").Replace("'", "''") + "',GETDATE(),'Disponible','Activo')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, oDomiciliario.cedula_domi);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oDomiciliario.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oDomiciliario.telefono ?? "");
+                if (obj.EjecutarSentencia("sp_Insertar_Domiciliario", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarDomiciliario(Domiciliario oDomiciliario)
         {
-            string sentencia = "UPDATE DOMICILIARIO SET " +
-                               "nombres = '" + oDomiciliario.nombres.Replace("'", "''") + "', " +
-                               "telefono = '" + (oDomiciliario.telefono ?? "").Replace("'", "''") + "', " +
-                               "disponibilidad = '" + (oDomiciliario.disponibilidad ?? "Disponible") + "', " +
-                               "estado = '" + (oDomiciliario.estado ?? "Activo") + "' " +
-                               "WHERE cedula_domi = '" + oDomiciliario.cedula_domi.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, oDomiciliario.cedula_domi);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oDomiciliario.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oDomiciliario.telefono ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@disponibilidad", SqlDbType.VarChar, 20, oDomiciliario.disponibilidad ?? "Disponible");
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oDomiciliario.estado ?? "Activo");
+                if (obj.EjecutarSentencia("sp_Actualizar_Domiciliario", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarDomiciliario(string cedula_domi)
         {
-            using (ConexionBD obj1 = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                obj1.EjecutarSentencia("UPDATE DESPACHO SET cc_domiciliario = NULL WHERE cc_domiciliario = '" + cedula_domi.Replace("'", "''") + "'", false);
-            }
-            using (ConexionBD obj2 = new ConexionBD())
-            {
-                obj2.EjecutarSentencia("DELETE FROM TRANSPORTE WHERE cedula_domi = '" + cedula_domi.Replace("'", "''") + "'", false);
-            }
-            using (ConexionBD obj3 = new ConexionBD())
-            {
-                string sentencia = "DELETE FROM DOMICILIARIO WHERE cedula_domi = '" + cedula_domi.Replace("'", "''") + "'";
-                if (obj3.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, cedula_domi);
+                if (obj.EjecutarSentencia("sp_Eliminar_Domiciliario", true))
                     return true;
-                ultimoError = obj3.Error;
+                ultimoError = obj.Error;
                 return false;
             }
+        }
+
+        public static List<Domiciliario> ListarDomiciliarios()
+        {
+            List<Domiciliario> lista = new List<Domiciliario>();
+            using (ConexionBD obj = new ConexionBD())
+            {
+                if (obj.Consultar("sp_Listar_Domiciliarios", true))
+                {
+                    SqlDataReader dr = obj.Reader;
+                    while (dr.Read())
+                        lista.Add(MapDomiciliario(dr));
+                }
+            }
+            return lista;
+        }
+
+        public static Domiciliario ConsultarDomiciliario(string cedula_domi)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, cedula_domi);
+                if (obj.Consultar("sp_Consultar_Domiciliario", true))
+                {
+                    SqlDataReader dr = obj.Reader;
+                    if (dr.Read())
+                        return MapDomiciliario(dr);
+                }
+            }
+            return null;
         }
 
         public static string LimpiarDomiciliariosPrueba()
@@ -71,13 +90,9 @@ namespace NewLife.Data
             foreach (string cedula in cedulas)
             {
                 using (ConexionBD o1 = new ConexionBD())
-                {
                     o1.EjecutarSentencia("UPDATE DESPACHO SET cc_domiciliario = NULL WHERE cc_domiciliario = '" + cedula + "'", false);
-                }
                 using (ConexionBD o2 = new ConexionBD())
-                {
                     o2.EjecutarSentencia("DELETE FROM TRANSPORTE WHERE cedula_domi = '" + cedula + "'", false);
-                }
                 using (ConexionBD o3 = new ConexionBD())
                 {
                     if (o3.EjecutarSentencia("DELETE FROM DOMICILIARIO WHERE cedula_domi = '" + cedula + "'", false))
@@ -87,59 +102,17 @@ namespace NewLife.Data
             return "Eliminados: " + eliminados + " de " + cedulas.Length;
         }
 
-        public static List<Domiciliario> ListarDomiciliarios()
+        private static Domiciliario MapDomiciliario(SqlDataReader dr)
         {
-            List<Domiciliario> lista = new List<Domiciliario>();
-            string sentencia = "SELECT cedula_domi, nombres, telefono, fecha_registro, disponibilidad, estado FROM DOMICILIARIO ORDER BY nombres";
-
-            using (ConexionBD objEst = new ConexionBD())
+            return new Domiciliario()
             {
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    while (dr.Read())
-                    {
-                        lista.Add(new Domiciliario()
-                        {
-                            cedula_domi = dr["cedula_domi"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            disponibilidad = dr["disponibilidad"] == DBNull.Value ? "Disponible" : dr["disponibilidad"].ToString(),
-                            estado = dr["estado"] == DBNull.Value ? "Activo" : dr["estado"].ToString()
-                        });
-                    }
-                }
-            }
-            return lista;
-        }
-
-        public static Domiciliario ConsultarDomiciliario(string cedula_domi)
-        {
-            Domiciliario oDomiciliario = null;
-            string sentencia = "SELECT cedula_domi, nombres, telefono, fecha_registro, disponibilidad, estado FROM DOMICILIARIO WHERE cedula_domi = '" +
-                               cedula_domi.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    if (dr.Read())
-                    {
-                        oDomiciliario = new Domiciliario()
-                        {
-                            cedula_domi = dr["cedula_domi"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            disponibilidad = dr["disponibilidad"] == DBNull.Value ? "Disponible" : dr["disponibilidad"].ToString(),
-                            estado = dr["estado"] == DBNull.Value ? "Activo" : dr["estado"].ToString()
-                        };
-                    }
-                }
-            }
-            return oDomiciliario;
+                cedula_domi = dr["cedula_domi"].ToString(),
+                nombres = dr["nombres"].ToString(),
+                telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
+                fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                disponibilidad = dr["disponibilidad"] == DBNull.Value ? "Disponible" : dr["disponibilidad"].ToString(),
+                estado = dr["estado"] == DBNull.Value ? "Activo" : dr["estado"].ToString()
+            };
         }
     }
 }

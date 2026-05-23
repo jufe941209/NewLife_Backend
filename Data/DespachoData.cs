@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -12,53 +13,47 @@ namespace NewLife.Data
 
         public static bool InsertarDespacho(Despacho oDespacho)
         {
-            string ccResp = string.IsNullOrEmpty(oDespacho.cc_responsable) ? "NULL" : "'" + oDespacho.cc_responsable.Replace("'", "''") + "'";
-            string ccDomi = string.IsNullOrEmpty(oDespacho.cc_domiciliario) ? "NULL" : "'" + oDespacho.cc_domiciliario.Replace("'", "''") + "'";
-            string sentencia = "INSERT INTO DESPACHO (fecha_despacho, estado, numero_factura, cc_responsable, cc_domiciliario) VALUES ('" +
-                               oDespacho.fecha_despacho.ToString("yyyy-MM-dd") + "','Pendiente','" +
-                               oDespacho.numero_factura.Replace("'", "''") + "'," +
-                               ccResp + "," + ccDomi + ")";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@fecha_despacho", SqlDbType.Date, 0, oDespacho.fecha_despacho);
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_factura", SqlDbType.VarChar, 20, oDespacho.numero_factura);
+                obj.AgregarParametro(ParameterDirection.Input, "@cc_responsable", SqlDbType.VarChar, 20, oDespacho.cc_responsable ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@cc_domiciliario", SqlDbType.VarChar, 20, oDespacho.cc_domiciliario ?? "");
+                if (obj.EjecutarSentencia("sp_Insertar_Despacho", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarDespacho(Despacho oDespacho)
         {
-            string ccResp = string.IsNullOrEmpty(oDespacho.cc_responsable) ? "NULL" : "'" + oDespacho.cc_responsable.Replace("'", "''") + "'";
-            string ccDomi = string.IsNullOrEmpty(oDespacho.cc_domiciliario) ? "NULL" : "'" + oDespacho.cc_domiciliario.Replace("'", "''") + "'";
-            string sentencia = "UPDATE DESPACHO SET " +
-                               "fecha_despacho = '" + oDespacho.fecha_despacho.ToString("yyyy-MM-dd") + "', " +
-                               "fecha_aprobacion = " + (oDespacho.fecha_aprobacion.HasValue ? "'" + oDespacho.fecha_aprobacion.Value.ToString("yyyy-MM-dd HH:mm:ss") + "'" : "NULL") + ", " +
-                               "estado = '" + oDespacho.estado + "', " +
-                               "fecha_entrega = " + (oDespacho.fecha_entrega.HasValue ? "'" + oDespacho.fecha_entrega.Value.ToString("yyyy-MM-dd HH:mm:ss") + "'" : "NULL") + ", " +
-                               "cc_responsable = " + ccResp + ", " +
-                               "cc_domiciliario = " + ccDomi + " " +
-                               "WHERE numero_despacho = " + oDespacho.numero_despacho;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_despacho", SqlDbType.Int, 0, oDespacho.numero_despacho);
+                obj.AgregarParametro(ParameterDirection.Input, "@fecha_despacho", SqlDbType.Date, 0, oDespacho.fecha_despacho);
+                obj.AgregarParametro(ParameterDirection.Input, "@fecha_aprobacion", SqlDbType.DateTime, 0,
+                    oDespacho.fecha_aprobacion.HasValue ? (object)oDespacho.fecha_aprobacion.Value : DBNull.Value);
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 30, oDespacho.estado ?? "Pendiente");
+                obj.AgregarParametro(ParameterDirection.Input, "@fecha_entrega", SqlDbType.DateTime, 0,
+                    oDespacho.fecha_entrega.HasValue ? (object)oDespacho.fecha_entrega.Value : DBNull.Value);
+                obj.AgregarParametro(ParameterDirection.Input, "@cc_responsable", SqlDbType.VarChar, 20, oDespacho.cc_responsable ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@cc_domiciliario", SqlDbType.VarChar, 20, oDespacho.cc_domiciliario ?? "");
+                if (obj.EjecutarSentencia("sp_Actualizar_Despacho", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarDespacho(int numero_despacho)
         {
-            string sentencia = "DELETE FROM DESPACHO WHERE numero_despacho = " + numero_despacho;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_despacho", SqlDbType.Int, 0, numero_despacho);
+                if (obj.EjecutarSentencia("sp_Eliminar_Despacho", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -66,27 +61,13 @@ namespace NewLife.Data
         public static List<Despacho> ListarDespachos()
         {
             List<Despacho> lista = new List<Despacho>();
-            string sentencia = "SELECT numero_despacho, fecha_despacho, fecha_aprobacion, estado, fecha_entrega, numero_factura, cc_responsable, cc_domiciliario FROM DESPACHO ORDER BY numero_despacho DESC";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Despachos", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Despacho()
-                        {
-                            numero_despacho = Convert.ToInt32(dr["numero_despacho"]),
-                            fecha_despacho = Convert.ToDateTime(dr["fecha_despacho"]),
-                            fecha_aprobacion = dr["fecha_aprobacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_aprobacion"]),
-                            estado = dr["estado"] == DBNull.Value ? "Pendiente" : dr["estado"].ToString(),
-                            fecha_entrega = dr["fecha_entrega"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_entrega"]),
-                            numero_factura = dr["numero_factura"].ToString(),
-                            cc_responsable = dr["cc_responsable"] == DBNull.Value ? "" : dr["cc_responsable"].ToString(),
-                            cc_domiciliario = dr["cc_domiciliario"] == DBNull.Value ? "" : dr["cc_domiciliario"].ToString()
-                        });
-                    }
+                        lista.Add(MapDespacho(dr));
                 }
             }
             return lista;
@@ -94,31 +75,32 @@ namespace NewLife.Data
 
         public static Despacho ConsultarDespacho(int numero_despacho)
         {
-            Despacho oDespacho = null;
-            string sentencia = "SELECT numero_despacho, fecha_despacho, fecha_aprobacion, estado, fecha_entrega, numero_factura, cc_responsable, cc_domiciliario FROM DESPACHO WHERE numero_despacho = " + numero_despacho;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_despacho", SqlDbType.Int, 0, numero_despacho);
+                if (obj.Consultar("sp_Consultar_Despacho", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oDespacho = new Despacho()
-                        {
-                            numero_despacho = Convert.ToInt32(dr["numero_despacho"]),
-                            fecha_despacho = Convert.ToDateTime(dr["fecha_despacho"]),
-                            fecha_aprobacion = dr["fecha_aprobacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_aprobacion"]),
-                            estado = dr["estado"] == DBNull.Value ? "Pendiente" : dr["estado"].ToString(),
-                            fecha_entrega = dr["fecha_entrega"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_entrega"]),
-                            numero_factura = dr["numero_factura"].ToString(),
-                            cc_responsable = dr["cc_responsable"] == DBNull.Value ? "" : dr["cc_responsable"].ToString(),
-                            cc_domiciliario = dr["cc_domiciliario"] == DBNull.Value ? "" : dr["cc_domiciliario"].ToString()
-                        };
-                    }
+                        return MapDespacho(dr);
                 }
             }
-            return oDespacho;
+            return null;
+        }
+
+        private static Despacho MapDespacho(SqlDataReader dr)
+        {
+            return new Despacho()
+            {
+                numero_despacho = Convert.ToInt32(dr["numero_despacho"]),
+                fecha_despacho = Convert.ToDateTime(dr["fecha_despacho"]),
+                fecha_aprobacion = dr["fecha_aprobacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_aprobacion"]),
+                estado = dr["estado"] == DBNull.Value ? "Pendiente" : dr["estado"].ToString(),
+                fecha_entrega = dr["fecha_entrega"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecha_entrega"]),
+                numero_factura = dr["numero_factura"].ToString(),
+                cc_responsable = dr["cc_responsable"] == DBNull.Value ? "" : dr["cc_responsable"].ToString(),
+                cc_domiciliario = dr["cc_domiciliario"] == DBNull.Value ? "" : dr["cc_domiciliario"].ToString()
+            };
         }
     }
 }

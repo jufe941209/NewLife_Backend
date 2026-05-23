@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -25,9 +26,7 @@ namespace NewLife.Data
                                    "INSERT INTO CATEGORIA (nombre, descripcion) VALUES ('" +
                                    nombre.Replace("'", "''") + "', '')";
                 using (ConexionBD obj = new ConexionBD())
-                {
                     obj.EjecutarSentencia(sentencia, false);
-                }
             }
 
             string nombresIn = string.Join(",", new string[]
@@ -36,9 +35,9 @@ namespace NewLife.Data
                 "'Cubiertos'","'Germinables'","'Otros productos'",
                 "'Platos y vajillas'","'Tapas'","'vasos, contenedores'","'Bowls y portacomidas'"
             });
-            using (ConexionBD objDel = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                objDel.EjecutarSentencia(
+                obj.EjecutarSentencia(
                     "DELETE FROM CATEGORIA WHERE nombre NOT IN (" + nombresIn + ") " +
                     "AND numero_categoria NOT IN (SELECT DISTINCT numero_categoria FROM PRODUCTO WHERE numero_categoria IS NOT NULL)",
                     false);
@@ -47,44 +46,39 @@ namespace NewLife.Data
 
         public static bool InsertarCategoria(Categoria oCategoria)
         {
-            string sentencia = "INSERT INTO CATEGORIA (nombre, descripcion) VALUES ('" +
-                               oCategoria.nombre.Replace("'", "''") + "','" +
-                               (oCategoria.descripcion ?? "").Replace("'", "''") + "')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@nombre", SqlDbType.VarChar, 100, oCategoria.nombre);
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 300, oCategoria.descripcion ?? "");
+                if (obj.EjecutarSentencia("sp_Insertar_Categoria", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarCategoria(Categoria oCategoria)
         {
-            string sentencia = "UPDATE CATEGORIA SET nombre = '" +
-                               oCategoria.nombre.Replace("'", "''") + "', descripcion = '" +
-                               (oCategoria.descripcion ?? "").Replace("'", "''") +
-                               "' WHERE numero_categoria = " + oCategoria.numero_categoria;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_categoria", SqlDbType.Int, 0, oCategoria.numero_categoria);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombre", SqlDbType.VarChar, 100, oCategoria.nombre);
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 300, oCategoria.descripcion ?? "");
+                if (obj.EjecutarSentencia("sp_Actualizar_Categoria", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarCategoria(int numero_categoria)
         {
-            string sentencia = "DELETE FROM CATEGORIA WHERE numero_categoria = " + numero_categoria;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_categoria", SqlDbType.Int, 0, numero_categoria);
+                if (obj.EjecutarSentencia("sp_Eliminar_Categoria", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -92,22 +86,13 @@ namespace NewLife.Data
         public static List<Categoria> ListarCategorias()
         {
             List<Categoria> lista = new List<Categoria>();
-            string sentencia = "SELECT numero_categoria, nombre, descripcion FROM CATEGORIA ORDER BY nombre";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Categorias", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Categoria()
-                        {
-                            numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
-                            nombre = dr["nombre"].ToString(),
-                            descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString()
-                        });
-                    }
+                        lista.Add(MapCategoria(dr));
                 }
             }
             return lista;
@@ -115,26 +100,27 @@ namespace NewLife.Data
 
         public static Categoria ConsultarCategoria(int numero_categoria)
         {
-            Categoria oCategoria = null;
-            string sentencia = "SELECT numero_categoria, nombre, descripcion FROM CATEGORIA WHERE numero_categoria = " + numero_categoria;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_categoria", SqlDbType.Int, 0, numero_categoria);
+                if (obj.Consultar("sp_Consultar_Categoria", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oCategoria = new Categoria()
-                        {
-                            numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
-                            nombre = dr["nombre"].ToString(),
-                            descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString()
-                        };
-                    }
+                        return MapCategoria(dr);
                 }
             }
-            return oCategoria;
+            return null;
+        }
+
+        private static Categoria MapCategoria(SqlDataReader dr)
+        {
+            return new Categoria()
+            {
+                numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
+                nombre = dr["nombre"].ToString(),
+                descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString()
+            };
         }
     }
 }
