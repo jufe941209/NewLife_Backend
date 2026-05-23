@@ -8,32 +8,23 @@ namespace NewLife.Helpers
 {
     public static class EmailHelper
     {
-        private static string ApiKey   => ConfigurationManager.AppSettings["MailjetApiKey"]    ?? "";
-        private static string SecretKey => ConfigurationManager.AppSettings["MailjetSecretKey"] ?? "";
-        private static string FromAddr => ConfigurationManager.AppSettings["EmailFrom"]         ?? "julianfccdlm@gmail.com";
-        private static string FromName => ConfigurationManager.AppSettings["EmailFromName"]     ?? "NEW LIFE";
+        private static string ApiKey   => ConfigurationManager.AppSettings["ResendApiKey"] ?? "";
+        private static string FromAddr => ConfigurationManager.AppSettings["EmailFrom"]    ?? "onboarding@resend.dev";
+        private static string FromName => ConfigurationManager.AppSettings["EmailFromName"] ?? "NEW LIFE";
 
         public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
         {
-            string htmlEscaped = cuerpoHtml
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\r", "")
-                .Replace("\n", "");
+            string payload = "{" +
+                "\"from\":\"" + FromName + " <" + FromAddr + ">\"," +
+                "\"to\":[\"" + destinatario + "\"]," +
+                "\"subject\":\"" + asunto + "\"," +
+                "\"html\":" + Newtonsoft.Json.JsonConvert.SerializeObject(cuerpoHtml) +
+            "}";
 
-            string payload = "{\"Messages\":[{" +
-                "\"From\":{\"Email\":\"" + FromAddr + "\",\"Name\":\"" + FromName + "\"}," +
-                "\"To\":[{\"Email\":\"" + destinatario + "\"}]," +
-                "\"Subject\":\"" + asunto + "\"," +
-                "\"HTMLPart\":\"" + htmlEscaped + "\"" +
-            "}]}";
-
-            string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(ApiKey + ":" + SecretKey));
-
-            var request = (HttpWebRequest)WebRequest.Create("https://api.mailjet.com/v3.1/send");
+            var request = (HttpWebRequest)WebRequest.Create("https://api.resend.com/emails");
             request.Method = "POST";
             request.ContentType = "application/json";
-            request.Headers["Authorization"] = "Basic " + credentials;
+            request.Headers["Authorization"] = "Bearer " + ApiKey;
             request.Timeout = 20000;
 
             byte[] data = Encoding.UTF8.GetBytes(payload);
@@ -46,7 +37,7 @@ namespace NewLife.Helpers
             {
                 string resp = reader.ReadToEnd();
                 if ((int)response.StatusCode >= 400)
-                    throw new Exception("Mailjet error: " + resp);
+                    throw new Exception("Resend error: " + resp);
             }
         }
 
