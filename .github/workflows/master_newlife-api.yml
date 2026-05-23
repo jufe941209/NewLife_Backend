@@ -10,9 +10,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
     permissions:
+      id-token: write
       contents: read
 
     steps:
@@ -30,35 +31,14 @@ jobs:
       - name: Build with MSBuild (FileSystem publish)
         run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl=published /p:DeleteExistingFiles=True /p:SkipInvalidConfigurations=true
 
-      - name: List build output
+      - name: Verify published output
         run: |
           if (Test-Path "published") {
-            Write-Host "=== published dir ==="
+            Write-Host "OK - published dir exists"
             dir published
           } else {
-            Write-Host "published dir NOT found - listing workspace:"
-            dir
+            Write-Host "ERROR - published dir not found"; dir; exit 1
           }
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: net-app
-          path: published
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: net-app
-          path: published
 
       - name: Login to Azure
         uses: azure/login@v2
