@@ -1,37 +1,50 @@
 using System;
 using System.Configuration;
+using System.IO;
 using System.Net;
-using System.Net.Mail;
+using System.Text;
 
 namespace NewLife.Helpers
 {
     public static class EmailHelper
     {
-        private static string Host     => ConfigurationManager.AppSettings["SmtpHost"]     ?? "smtp-relay.brevo.com";
-        private static int    Port     => int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-        private static string User     => ConfigurationManager.AppSettings["SmtpUser"]     ?? "";
-        private static string Pass     => ConfigurationManager.AppSettings["SmtpPass"]     ?? "";
-        private static string FromAddr => ConfigurationManager.AppSettings["SmtpFrom"]     ?? "";
-        private static string FromName => ConfigurationManager.AppSettings["SmtpFromName"] ?? "NEW LIFE";
+        private static string ApiKey   => ConfigurationManager.AppSettings["BrevoApiKey"]   ?? "";
+        private static string FromAddr => ConfigurationManager.AppSettings["EmailFrom"]     ?? "";
+        private static string FromName => ConfigurationManager.AppSettings["EmailFromName"] ?? "NEW LIFE";
 
         public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
         {
-            using (var smtp = new SmtpClient(Host, Port))
-            {
-                smtp.EnableSsl = true;
-                smtp.Credentials = new NetworkCredential(User, Pass);
-                smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
-                smtp.Timeout = 20000;
+            string html = cuerpoHtml
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r\n", " ")
+                .Replace("\r", " ")
+                .Replace("\n", " ");
 
-                var msg = new MailMessage
-                {
-                    From = new MailAddress(FromAddr, FromName),
-                    Subject = asunto,
-                    Body = cuerpoHtml,
-                    IsBodyHtml = true
-                };
-                msg.To.Add(destinatario);
-                smtp.Send(msg);
+            string payload = "{" +
+                "\"sender\":{\"email\":\"" + FromAddr + "\",\"name\":\"" + FromName + "\"}," +
+                "\"to\":[{\"email\":\"" + destinatario + "\"}]," +
+                "\"subject\":\"" + asunto + "\"," +
+                "\"htmlContent\":\"" + html + "\"" +
+            "}";
+
+            var request = (HttpWebRequest)WebRequest.Create("https://api.brevo.com/v3/smtp/email");
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            request.Headers["api-key"] = ApiKey;
+            request.Timeout = 20000;
+
+            byte[] data = Encoding.UTF8.GetBytes(payload);
+            request.ContentLength = data.Length;
+            using (var stream = request.GetRequestStream())
+                stream.Write(data, 0, data.Length);
+
+            using (var response = (HttpWebResponse)request.GetResponse())
+            using (var reader = new StreamReader(response.GetResponseStream()))
+            {
+                string resp = reader.ReadToEnd();
+                if ((int)response.StatusCode >= 400)
+                    throw new Exception("Brevo error: " + resp);
             }
         }
 
