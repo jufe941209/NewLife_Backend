@@ -1,54 +1,37 @@
 using System;
 using System.Configuration;
-using System.IO;
 using System.Net;
-using System.Text;
+using System.Net.Mail;
 
 namespace NewLife.Helpers
 {
     public static class EmailHelper
     {
-        private static string ApiKey    => ConfigurationManager.AppSettings["MailjetApiKey"]    ?? "";
-        private static string SecretKey => ConfigurationManager.AppSettings["MailjetSecretKey"] ?? "";
-        private static string FromAddr  => ConfigurationManager.AppSettings["EmailFrom"]        ?? "";
-        private static string FromName  => ConfigurationManager.AppSettings["EmailFromName"]    ?? "NEW LIFE";
+        private static string Host     => ConfigurationManager.AppSettings["SmtpHost"]     ?? "smtp-relay.brevo.com";
+        private static int    Port     => int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
+        private static string User     => ConfigurationManager.AppSettings["SmtpUser"]     ?? "";
+        private static string Pass     => ConfigurationManager.AppSettings["SmtpPass"]     ?? "";
+        private static string FromAddr => ConfigurationManager.AppSettings["SmtpFrom"]     ?? "";
+        private static string FromName => ConfigurationManager.AppSettings["SmtpFromName"] ?? "NEW LIFE";
 
         public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
         {
-            string htmlEscaped = cuerpoHtml
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\r\n", " ")
-                .Replace("\r", " ")
-                .Replace("\n", " ");
-
-            string payload = "{\"Messages\":[{" +
-                "\"From\":{\"Email\":\"" + FromAddr + "\",\"Name\":\"" + FromName + "\"}," +
-                "\"To\":[{\"Email\":\"" + destinatario + "\"}]," +
-                "\"Subject\":\"" + asunto + "\"," +
-                "\"HTMLPart\":\"" + htmlEscaped + "\"" +
-            "}]}";
-
-            string credentials = Convert.ToBase64String(
-                Encoding.ASCII.GetBytes(ApiKey + ":" + SecretKey));
-
-            var request = (HttpWebRequest)WebRequest.Create("https://api.mailjet.com/v3.1/send");
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            request.Headers["Authorization"] = "Basic " + credentials;
-            request.Timeout = 20000;
-
-            byte[] data = Encoding.UTF8.GetBytes(payload);
-            request.ContentLength = data.Length;
-            using (var stream = request.GetRequestStream())
-                stream.Write(data, 0, data.Length);
-
-            using (var response = (HttpWebResponse)request.GetResponse())
-            using (var reader = new StreamReader(response.GetResponseStream()))
+            using (var smtp = new SmtpClient(Host, Port))
             {
-                string resp = reader.ReadToEnd();
-                if ((int)response.StatusCode >= 400)
-                    throw new Exception("Mailjet error " + (int)response.StatusCode + ": " + resp);
+                smtp.EnableSsl = true;
+                smtp.Credentials = new NetworkCredential(User, Pass);
+                smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+                smtp.Timeout = 20000;
+
+                var msg = new MailMessage
+                {
+                    From = new MailAddress(FromAddr, FromName),
+                    Subject = asunto,
+                    Body = cuerpoHtml,
+                    IsBodyHtml = true
+                };
+                msg.To.Add(destinatario);
+                smtp.Send(msg);
             }
         }
 
