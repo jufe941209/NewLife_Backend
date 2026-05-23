@@ -422,6 +422,24 @@ BEGIN
     FROM DESPACHO WHERE numero_despacho=@numero_despacho
 END
 GO
+CREATE OR ALTER PROCEDURE sp_Listar_Despachos_Disponibles
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT numero_despacho,fecha_despacho,fecha_aprobacion,estado,fecha_entrega,
+           numero_factura,cc_responsable,cc_domiciliario
+    FROM DESPACHO
+    WHERE (cc_responsable IS NULL OR cc_responsable = '') AND estado = 'Pendiente'
+END
+GO
+CREATE OR ALTER PROCEDURE sp_ExisteDespacho_PorFactura
+    @numero_factura VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT COUNT(*) FROM DESPACHO WHERE numero_factura = @numero_factura
+END
+GO
 
 -- ============================================================
 -- TIPO_PRODUCTO

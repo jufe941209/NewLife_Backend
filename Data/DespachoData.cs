@@ -88,6 +88,32 @@ namespace NewLife.Data
             return null;
         }
 
+        public static List<Despacho> ListarDespachosDisponibles()
+        {
+            List<Despacho> lista = new List<Despacho>();
+            using (ConexionBD obj = new ConexionBD())
+            {
+                if (obj.Consultar("sp_Listar_Despachos_Disponibles", true))
+                {
+                    SqlDataReader dr = obj.Reader;
+                    while (dr.Read())
+                        lista.Add(MapDespacho(dr));
+                }
+            }
+            return lista;
+        }
+
+        public static bool ExisteDespachoParaFactura(string numero_factura)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_factura", SqlDbType.VarChar, 20, numero_factura);
+                if (!obj.ConsultarValorUnico("sp_ExisteDespacho_PorFactura", true))
+                    return false;
+                return Convert.ToInt32(obj.ValorUnico) > 0;
+            }
+        }
+
         private static Despacho MapDespacho(SqlDataReader dr)
         {
             return new Despacho()

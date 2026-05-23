@@ -44,10 +44,25 @@ namespace NewLife.Controllers
                 return BadRequest("Datos inválidos.");
 
             bool resultado = FacturaVentaData.ActualizarFacturaVenta(oFactura);
-            if (resultado)
-                return Ok("Factura de venta actualizada exitosamente.");
-            else
+            if (!resultado)
                 return BadRequest(FacturaVentaData.ultimoError);
+
+            // Auto-crear despacho cuando la factura se aprueba o paga por primera vez
+            if ((oFactura.estado_pago == "Aprobado" || oFactura.estado_pago == "Pagado")
+                && !DespachoData.ExisteDespachoParaFactura(oFactura.numero_factura))
+            {
+                var despacho = new Despacho
+                {
+                    fecha_despacho = System.DateTime.Now,
+                    numero_factura = oFactura.numero_factura,
+                    cc_responsable = "",
+                    cc_domiciliario = "",
+                    estado = "Pendiente"
+                };
+                DespachoData.InsertarDespacho(despacho);
+            }
+
+            return Ok("Factura de venta actualizada exitosamente.");
         }
 
         [HttpDelete]

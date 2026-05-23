@@ -1,10 +1,17 @@
 using NewLife.Data;
 using NewLife.Models;
+using System;
 using System.Collections.Generic;
 using System.Web.Http;
 
 namespace NewLife.Controllers
 {
+    public class AprobarDespachoRequest
+    {
+        public int numero_despacho { get; set; }
+        public string cc_responsable { get; set; }
+    }
+
     public class DespachoController : ApiController
     {
         // GET api/despacho
@@ -12,6 +19,15 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<Despacho> lista = DespachoData.ListarDespachos();
+            return Ok(lista);
+        }
+
+        // GET api/despacho/disponibles — despachos sin responsable asignado
+        [HttpGet]
+        [Route("api/despacho/disponibles")]
+        public IHttpActionResult GetDisponibles()
+        {
+            List<Despacho> lista = DespachoData.ListarDespachosDisponibles();
             return Ok(lista);
         }
 
@@ -40,6 +56,32 @@ namespace NewLife.Controllers
                 return BadRequest(DespachoData.ultimoError);
         }
 
+        // PUT api/despacho/aprobar — responsable aprueba y se asigna el despacho
+        [HttpPut]
+        [Route("api/despacho/aprobar")]
+        public IHttpActionResult Aprobar([FromBody] AprobarDespachoRequest req)
+        {
+            if (req == null || req.numero_despacho == 0 || string.IsNullOrEmpty(req.cc_responsable))
+                return BadRequest("Numero de despacho y cedula del responsable son requeridos.");
+
+            Despacho oDespacho = DespachoData.ConsultarDespacho(req.numero_despacho);
+            if (oDespacho == null)
+                return NotFound();
+
+            if (!string.IsNullOrEmpty(oDespacho.cc_responsable))
+                return Ok(new { success = false, message = "Este despacho ya fue tomado por otro responsable." });
+
+            oDespacho.cc_responsable = req.cc_responsable;
+            oDespacho.estado = "Aprobado";
+            oDespacho.fecha_aprobacion = DateTime.Now;
+
+            bool resultado = DespachoData.ActualizarDespacho(oDespacho);
+            if (resultado)
+                return Ok(new { success = true, message = "Despacho aprobado y asignado correctamente." });
+            else
+                return BadRequest(DespachoData.ultimoError);
+        }
+
         // PUT api/despacho
         [HttpPut]
         public IHttpActionResult Put([FromBody] Despacho oDespacho)
@@ -47,12 +89,9 @@ namespace NewLife.Controllers
             if (oDespacho == null)
                 return BadRequest("Datos inválidos.");
 
-            // Domiciliario obligatorio para estados activos
             if ((oDespacho.estado == "En camino" || oDespacho.estado == "Entregado") &&
                 string.IsNullOrEmpty(oDespacho.cc_domiciliario))
-            {
                 return BadRequest("Un despacho en estado '" + oDespacho.estado + "' debe tener un domiciliario asignado.");
-            }
 
             bool resultado = DespachoData.ActualizarDespacho(oDespacho);
             if (resultado)
