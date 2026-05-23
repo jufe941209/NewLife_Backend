@@ -8,23 +8,32 @@ namespace NewLife.Helpers
 {
     public static class EmailHelper
     {
-        private static string ApiKey   => ConfigurationManager.AppSettings["ResendApiKey"] ?? "";
-        private static string FromName => ConfigurationManager.AppSettings["EmailFromName"] ?? "NEW LIFE";
-        private static string FromAddr => ConfigurationManager.AppSettings["EmailFrom"] ?? "onboarding@resend.dev";
+        private static string ApiKey   => ConfigurationManager.AppSettings["MailjetApiKey"]    ?? "";
+        private static string SecretKey => ConfigurationManager.AppSettings["MailjetSecretKey"] ?? "";
+        private static string FromAddr => ConfigurationManager.AppSettings["EmailFrom"]         ?? "julianfccdlm@gmail.com";
+        private static string FromName => ConfigurationManager.AppSettings["EmailFromName"]     ?? "NEW LIFE";
 
         public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
         {
-            string payload = "{" +
-                "\"from\":\"" + FromName + " <" + FromAddr + ">\"," +
-                "\"to\":[\"" + destinatario + "\"]," +
-                "\"subject\":\"" + asunto + "\"," +
-                "\"html\":" + Newtonsoft.Json.JsonConvert.SerializeObject(cuerpoHtml) +
-            "}";
+            string htmlEscaped = cuerpoHtml
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "")
+                .Replace("\n", "");
 
-            var request = (HttpWebRequest)WebRequest.Create("https://api.resend.com/emails");
+            string payload = "{\"Messages\":[{" +
+                "\"From\":{\"Email\":\"" + FromAddr + "\",\"Name\":\"" + FromName + "\"}," +
+                "\"To\":[{\"Email\":\"" + destinatario + "\"}]," +
+                "\"Subject\":\"" + asunto + "\"," +
+                "\"HTMLPart\":\"" + htmlEscaped + "\"" +
+            "}]}";
+
+            string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(ApiKey + ":" + SecretKey));
+
+            var request = (HttpWebRequest)WebRequest.Create("https://api.mailjet.com/v3.1/send");
             request.Method = "POST";
             request.ContentType = "application/json";
-            request.Headers["Authorization"] = "Bearer " + ApiKey;
+            request.Headers["Authorization"] = "Basic " + credentials;
             request.Timeout = 20000;
 
             byte[] data = Encoding.UTF8.GetBytes(payload);
@@ -36,15 +45,14 @@ namespace NewLife.Helpers
             using (var reader = new StreamReader(response.GetResponseStream()))
             {
                 string resp = reader.ReadToEnd();
-                if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created)
-                    throw new Exception("Resend error: " + resp);
+                if ((int)response.StatusCode >= 400)
+                    throw new Exception("Mailjet error: " + resp);
             }
         }
 
         private static string PlantillaBase(string titulo, string subtitulo, string contenido)
         {
-            return "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'>" +
-                "<meta name='viewport' content='width=device-width,initial-scale=1'></head>" +
+            return "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'></head>" +
                 "<body style='margin:0;padding:0;background:#f0fdf4;font-family:Arial,sans-serif;'>" +
                 "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f0fdf4;padding:40px 20px;'>" +
                 "<tr><td align='center'>" +
@@ -59,8 +67,7 @@ namespace NewLife.Helpers
                 contenido +
                 "</td></tr>" +
                 "<tr><td style='background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e2e8f0;'>" +
-                "<p style='margin:0;color:#94a3b8;font-size:0.8rem;'>Este correo fue enviado automaticamente por NEW LIFE.<br>" +
-                "Si no realizaste esta accion, ignora este mensaje.</p>" +
+                "<p style='margin:0;color:#94a3b8;font-size:0.8rem;'>Correo automatico de NEW LIFE. Si no realizaste esta accion, ignoralo.</p>" +
                 "</td></tr></table></td></tr></table></body></html>";
         }
 
@@ -68,7 +75,7 @@ namespace NewLife.Helpers
         {
             string contenido =
                 "<p style='color:#374151;font-size:1rem;margin:0 0 20px;'>Hola <strong>" + nombres + "</strong>," +
-                " gracias por registrarte en NEW LIFE.<br>Para completar tu registro ingresa el siguiente codigo:</p>" +
+                " gracias por registrarte en NEW LIFE. Para completar tu registro ingresa este codigo:</p>" +
                 "<div style='text-align:center;margin:28px 0;'>" +
                 "<div style='display:inline-block;background:#f0fdf4;border:2px dashed #28a745;border-radius:12px;padding:20px 40px;'>" +
                 "<div style='font-size:2.5rem;font-weight:900;color:#16a34a;letter-spacing:10px;'>" + codigo + "</div>" +
@@ -84,7 +91,7 @@ namespace NewLife.Helpers
         {
             string contenido =
                 "<p style='color:#374151;font-size:1rem;margin:0 0 20px;'>Hola <strong>" + nombres + "</strong>," +
-                " recibimos una solicitud para restablecer tu contrasena.<br>Usa el siguiente codigo:</p>" +
+                " recibimos una solicitud para restablecer tu contrasena. Usa este codigo:</p>" +
                 "<div style='text-align:center;margin:28px 0;'>" +
                 "<div style='display:inline-block;background:#fff7ed;border:2px dashed #f59e0b;border-radius:12px;padding:20px 40px;'>" +
                 "<div style='font-size:2.5rem;font-weight:900;color:#d97706;letter-spacing:10px;'>" + codigo + "</div>" +
