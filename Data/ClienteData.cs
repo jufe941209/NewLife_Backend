@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -12,58 +13,53 @@ namespace NewLife.Data
 
         public static bool InsertarCliente(Cliente oCliente)
         {
-            string sentencia = "INSERT INTO CLIENTE (numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, contrasena, tipo_cliente, estado, fecha_registro, cedula_adm) VALUES ('" +
-                               oCliente.numero_identificacion.Replace("'", "''") + "','" +
-                               oCliente.nombres.Replace("'", "''") + "','" +
-                               (oCliente.tipo_documento ?? "CC").Replace("'", "''") + "','" +
-                               (oCliente.direccion ?? "").Replace("'", "''") + "','" +
-                               (oCliente.telefono ?? "").Replace("'", "''") + "','" +
-                               oCliente.correo.Replace("'", "''") + "','" +
-                               (oCliente.contrasena ?? "111111").Replace("'", "''") + "','" +
-                               (oCliente.tipo_cliente ?? "Regular").Replace("'", "''") + "','" +
-                               (oCliente.estado ?? "Activo") + "',GETDATE(),'" +
-                               (oCliente.cedula_adm ?? "").Replace("'", "''") + "')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_identificacion", SqlDbType.VarChar, 20, oCliente.numero_identificacion);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oCliente.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@tipo_documento", SqlDbType.VarChar, 10, oCliente.tipo_documento ?? "CC");
+                obj.AgregarParametro(ParameterDirection.Input, "@direccion", SqlDbType.VarChar, 200, oCliente.direccion ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oCliente.telefono ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oCliente.correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, oCliente.contrasena ?? "111111");
+                obj.AgregarParametro(ParameterDirection.Input, "@tipo_cliente", SqlDbType.VarChar, 20, oCliente.tipo_cliente ?? "Regular");
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oCliente.estado ?? "Activo");
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, oCliente.cedula_adm ?? "");
+                if (obj.EjecutarSentencia("sp_Insertar_Cliente", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarCliente(Cliente oCliente)
         {
-            string sentencia = "UPDATE CLIENTE SET " +
-                               "nombres = '" + oCliente.nombres.Replace("'", "''") + "', " +
-                               "tipo_documento = '" + (oCliente.tipo_documento ?? "CC").Replace("'", "''") + "', " +
-                               "direccion = '" + (oCliente.direccion ?? "").Replace("'", "''") + "', " +
-                               "telefono = '" + (oCliente.telefono ?? "").Replace("'", "''") + "', " +
-                               "correo = '" + oCliente.correo.Replace("'", "''") + "', " +
-                               "tipo_cliente = '" + (oCliente.tipo_cliente ?? "Regular").Replace("'", "''") + "', " +
-                               "estado = '" + (oCliente.estado ?? "Activo") + "', " +
-                               "cedula_adm = '" + (oCliente.cedula_adm ?? "").Replace("'", "''") + "' " +
-                               "WHERE numero_identificacion = '" + oCliente.numero_identificacion.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_identificacion", SqlDbType.VarChar, 20, oCliente.numero_identificacion);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oCliente.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@tipo_documento", SqlDbType.VarChar, 10, oCliente.tipo_documento ?? "CC");
+                obj.AgregarParametro(ParameterDirection.Input, "@direccion", SqlDbType.VarChar, 200, oCliente.direccion ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oCliente.telefono ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oCliente.correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@tipo_cliente", SqlDbType.VarChar, 20, oCliente.tipo_cliente ?? "Regular");
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oCliente.estado ?? "Activo");
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, oCliente.cedula_adm ?? "");
+                if (obj.EjecutarSentencia("sp_Actualizar_Cliente", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarCliente(string numero_identificacion)
         {
-            string sentencia = "DELETE FROM CLIENTE WHERE numero_identificacion = '" + numero_identificacion.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_identificacion", SqlDbType.VarChar, 20, numero_identificacion);
+                if (obj.EjecutarSentencia("sp_Eliminar_Cliente", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -71,29 +67,13 @@ namespace NewLife.Data
         public static List<Cliente> ListarClientes()
         {
             List<Cliente> lista = new List<Cliente>();
-            string sentencia = "SELECT numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, fecha_registro, tipo_cliente, estado, cedula_adm FROM CLIENTE ORDER BY nombres";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Clientes", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Cliente()
-                        {
-                            numero_identificacion = dr["numero_identificacion"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
-                            direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
-                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
-                            estado = dr["estado"].ToString(),
-                            cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
-                        });
-                    }
+                        lista.Add(MapCliente(dr));
                 }
             }
             return lista;
@@ -101,85 +81,69 @@ namespace NewLife.Data
 
         public static Cliente LoginCliente(string correo, string contrasena)
         {
-            Cliente oCliente = null;
-            string sentencia = "SELECT numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, fecha_registro, tipo_cliente, estado, cedula_adm FROM CLIENTE " +
-                               "WHERE correo = '" + correo.Replace("'", "''") + "' AND contrasena = '" + contrasena.Replace("'", "''") + "' AND estado = 'Activo'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, contrasena);
+                if (obj.Consultar("sp_Login_Cliente", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oCliente = new Cliente()
-                        {
-                            numero_identificacion = dr["numero_identificacion"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
-                            direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
-                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
-                            estado = dr["estado"].ToString(),
-                            cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
-                        };
-                    }
+                        return MapCliente(dr);
                 }
             }
-            return oCliente;
+            return null;
         }
 
         public static bool CambiarContrasena(string correo, string nuevaContrasena)
         {
-            string sentencia = "UPDATE CLIENTE SET contrasena = '" + nuevaContrasena.Replace("'", "''") +
-                               "' WHERE correo = '" + correo.Replace("'", "''") + "'";
             using (ConexionBD obj = new ConexionBD())
             {
-                return obj.EjecutarSentencia(sentencia, false);
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, nuevaContrasena);
+                return obj.EjecutarSentencia("sp_CambiarContrasena_Cliente", true);
             }
         }
 
         public static bool ExisteCorreo(string correo)
         {
-            string sentencia = "SELECT COUNT(*) FROM CLIENTE WHERE correo = '" + correo.Replace("'", "''") + "' AND estado = 'Activo'";
             using (ConexionBD obj = new ConexionBD())
             {
-                return obj.ConsultarValorUnico(sentencia, false) && Convert.ToInt32(obj.ValorUnico) > 0;
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
+                return obj.ConsultarValorUnico("sp_ExisteCorreo_Cliente", true) && Convert.ToInt32(obj.ValorUnico) > 0;
             }
         }
 
         public static Cliente ConsultarCliente(string numero_identificacion)
         {
-            Cliente oCliente = null;
-            string sentencia = "SELECT numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, fecha_registro, tipo_cliente, estado, cedula_adm FROM CLIENTE WHERE numero_identificacion = '" +
-                               numero_identificacion.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_identificacion", SqlDbType.VarChar, 20, numero_identificacion);
+                if (obj.Consultar("sp_Consultar_Cliente", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oCliente = new Cliente()
-                        {
-                            numero_identificacion = dr["numero_identificacion"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
-                            direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
-                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
-                            estado = dr["estado"].ToString(),
-                            cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
-                        };
-                    }
+                        return MapCliente(dr);
                 }
             }
-            return oCliente;
+            return null;
+        }
+
+        private static Cliente MapCliente(SqlDataReader dr)
+        {
+            return new Cliente()
+            {
+                numero_identificacion = dr["numero_identificacion"].ToString(),
+                nombres = dr["nombres"].ToString(),
+                tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
+                direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
+                telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
+                correo = dr["correo"].ToString(),
+                fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
+                estado = dr["estado"].ToString(),
+                cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
+            };
         }
     }
 }

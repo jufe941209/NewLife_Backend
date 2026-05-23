@@ -2,6 +2,7 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace NewLife.Data
@@ -9,25 +10,6 @@ namespace NewLife.Data
     public class ResponsableData
     {
         public static string ultimoError = "";
-
-        public static bool CambiarContrasena(string correo, string nuevaContrasena)
-        {
-            string sentencia = "UPDATE RESPONSABLE SET contrasena = '" + nuevaContrasena.Replace("'", "''") +
-                               "' WHERE correo = '" + correo.Replace("'", "''") + "'";
-            using (ConexionBD obj = new ConexionBD())
-            {
-                return obj.EjecutarSentencia(sentencia, false);
-            }
-        }
-
-        public static bool ExisteCorreo(string correo)
-        {
-            string sentencia = "SELECT COUNT(*) FROM RESPONSABLE WHERE correo = '" + correo.Replace("'", "''") + "'";
-            using (ConexionBD obj = new ConexionBD())
-            {
-                return obj.ConsultarValorUnico(sentencia, false) && Convert.ToInt32(obj.ValorUnico) > 0;
-            }
-        }
 
         public static void MigrarContrasena()
         {
@@ -43,73 +25,45 @@ namespace NewLife.Data
 
         public static bool InsertarResponsable(Responsable oResponsable)
         {
-            string contrasena = string.IsNullOrEmpty(oResponsable.contrasena) ? "111111" : oResponsable.contrasena;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                string sentencia = "INSERT INTO RESPONSABLE (cedula_resp, nombres, telefono, correo, contrasena, fecha_registro, estado) VALUES ('" +
-                                   oResponsable.cedula_resp + "','" +
-                                   oResponsable.nombres + "','" +
-                                   (oResponsable.telefono ?? "") + "','" +
-                                   (oResponsable.correo ?? "") + "','" +
-                                   contrasena + "',GETDATE(),'Activo')";
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_resp", SqlDbType.VarChar, 20, oResponsable.cedula_resp);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oResponsable.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oResponsable.telefono ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oResponsable.correo ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, string.IsNullOrEmpty(oResponsable.contrasena) ? "111111" : oResponsable.contrasena);
+                if (obj.EjecutarSentencia("sp_Insertar_Responsable", true))
                 { ultimoError = ""; return true; }
-            }
-
-            // Fallback: columna contrasena no existe aún
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                string sentencia = "INSERT INTO RESPONSABLE (cedula_resp, nombres, telefono, correo, fecha_registro, estado) VALUES ('" +
-                                   oResponsable.cedula_resp + "','" +
-                                   oResponsable.nombres + "','" +
-                                   (oResponsable.telefono ?? "") + "','" +
-                                   (oResponsable.correo ?? "") + "',GETDATE(),'Activo')";
-                if (objEst.EjecutarSentencia(sentencia, false))
-                { ultimoError = ""; return true; }
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarResponsable(Responsable oResponsable)
         {
-            bool tienePassword = !string.IsNullOrEmpty(oResponsable.contrasena);
-            string baseSet = "nombres = '" + oResponsable.nombres + "', " +
-                             "telefono = '" + (oResponsable.telefono ?? "") + "', " +
-                             "correo = '" + (oResponsable.correo ?? "") + "', " +
-                             "estado = '" + (oResponsable.estado ?? "Activo") + "'";
-            string whereClause = " WHERE cedula_resp = '" + oResponsable.cedula_resp + "'";
-
-            if (tienePassword)
+            using (ConexionBD obj = new ConexionBD())
             {
-                using (ConexionBD objEst = new ConexionBD())
-                {
-                    string conPass = "UPDATE RESPONSABLE SET " + baseSet +
-                                     ", contrasena = '" + oResponsable.contrasena + "'" + whereClause;
-                    if (objEst.EjecutarSentencia(conPass, false))
-                    { ultimoError = ""; return true; }
-                }
-            }
-
-            using (ConexionBD objEst2 = new ConexionBD())
-            {
-                string sinPass = "UPDATE RESPONSABLE SET " + baseSet + whereClause;
-                if (objEst2.EjecutarSentencia(sinPass, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_resp", SqlDbType.VarChar, 20, oResponsable.cedula_resp);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oResponsable.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oResponsable.telefono ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oResponsable.correo ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, oResponsable.contrasena ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oResponsable.estado ?? "Activo");
+                if (obj.EjecutarSentencia("sp_Actualizar_Responsable", true))
                 { ultimoError = ""; return true; }
-                ultimoError = objEst2.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarResponsable(string cedula_resp)
         {
-            string sentencia = "DELETE FROM RESPONSABLE WHERE cedula_resp = '" + cedula_resp + "'";
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_resp", SqlDbType.VarChar, 20, cedula_resp);
+                if (obj.EjecutarSentencia("sp_Eliminar_Responsable", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -117,50 +71,13 @@ namespace NewLife.Data
         public static List<Responsable> ListarResponsables()
         {
             List<Responsable> lista = new List<Responsable>();
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                string sentencia = "SELECT cedula_resp, nombres, telefono, correo, ISNULL(contrasena,'111111') AS contrasena, fecha_registro, estado FROM RESPONSABLE ORDER BY nombres";
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Responsables", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Responsable()
-                        {
-                            cedula_resp = dr["cedula_resp"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            telefono = dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            contrasena = dr["contrasena"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            estado = dr["estado"].ToString()
-                        });
-                    }
-                    return lista;
-                }
-            }
-
-            // Fallback: columna contrasena aún no existe en la BD
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                string sentencia = "SELECT cedula_resp, nombres, telefono, correo, fecha_registro, estado FROM RESPONSABLE ORDER BY nombres";
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    while (dr.Read())
-                    {
-                        lista.Add(new Responsable()
-                        {
-                            cedula_resp = dr["cedula_resp"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            telefono = dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            contrasena = "111111",
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            estado = dr["estado"].ToString()
-                        });
-                    }
+                        lista.Add(MapResponsable(dr));
                 }
             }
             return lista;
@@ -168,53 +85,50 @@ namespace NewLife.Data
 
         public static Responsable ConsultarResponsable(string cedula_resp)
         {
-            Responsable oResponsable = null;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                string sentencia = "SELECT cedula_resp, nombres, telefono, correo, ISNULL(contrasena,'111111') AS contrasena, fecha_registro, estado FROM RESPONSABLE WHERE cedula_resp = '" + cedula_resp + "'";
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_resp", SqlDbType.VarChar, 20, cedula_resp);
+                if (obj.Consultar("sp_Consultar_Responsable", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        return new Responsable()
-                        {
-                            cedula_resp = dr["cedula_resp"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            telefono = dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            contrasena = dr["contrasena"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            estado = dr["estado"].ToString()
-                        };
-                    }
+                        return MapResponsable(dr);
                 }
             }
+            return null;
+        }
 
-            // Fallback sin contrasena
-            using (ConexionBD objEst = new ConexionBD())
+        public static bool CambiarContrasena(string correo, string nuevaContrasena)
+        {
+            using (ConexionBD obj = new ConexionBD())
             {
-                string sentencia = "SELECT cedula_resp, nombres, telefono, correo, fecha_registro, estado FROM RESPONSABLE WHERE cedula_resp = '" + cedula_resp + "'";
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    if (dr.Read())
-                    {
-                        oResponsable = new Responsable()
-                        {
-                            cedula_resp = dr["cedula_resp"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            telefono = dr["telefono"].ToString(),
-                            correo = dr["correo"].ToString(),
-                            contrasena = "111111",
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            estado = dr["estado"].ToString()
-                        };
-                    }
-                }
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
+                obj.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, nuevaContrasena);
+                return obj.EjecutarSentencia("sp_CambiarContrasena_Responsable", true);
             }
-            return oResponsable;
+        }
+
+        public static bool ExisteCorreo(string correo)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
+                return obj.ConsultarValorUnico("sp_ExisteCorreo_Responsable", true) && Convert.ToInt32(obj.ValorUnico) > 0;
+            }
+        }
+
+        private static Responsable MapResponsable(SqlDataReader dr)
+        {
+            return new Responsable()
+            {
+                cedula_resp = dr["cedula_resp"].ToString(),
+                nombres = dr["nombres"].ToString(),
+                telefono = dr["telefono"].ToString(),
+                correo = dr["correo"].ToString(),
+                contrasena = dr["contrasena"] == DBNull.Value ? "111111" : dr["contrasena"].ToString(),
+                fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                estado = dr["estado"].ToString()
+            };
         }
     }
 }

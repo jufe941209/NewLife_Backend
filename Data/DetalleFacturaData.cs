@@ -2,8 +2,8 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using System.Globalization;
 
 namespace NewLife.Data
 {
@@ -25,63 +25,93 @@ namespace NewLife.Data
 
         public static bool InsertarDetalleFactura(DetalleFactura oDetalle)
         {
-            string descuento = oDetalle.descuento_porcentaje.HasValue
-                ? oDetalle.descuento_porcentaje.Value.ToString(CultureInfo.InvariantCulture)
-                : "0";
-            string precioUnit = oDetalle.precio_unitario.ToString(CultureInfo.InvariantCulture);
-
-            string sentencia = "INSERT INTO DETALLE_FACTURA (cantidad, descuento_porcentaje, numero_factura, codigo_prod, precio_unitario) VALUES (" +
-                               oDetalle.cantidad + ", " +
-                               descuento + ", '" +
-                               oDetalle.numero_factura.Replace("'", "''") + "', '" +
-                               oDetalle.codigo_prod.Replace("'", "''") + "', " +
-                               precioUnit + ")";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@cantidad", SqlDbType.Int, 0, oDetalle.cantidad);
+                obj.AgregarParametro(ParameterDirection.Input, "@descuento_porcentaje", SqlDbType.Decimal, 0,
+                    oDetalle.descuento_porcentaje.HasValue ? (object)oDetalle.descuento_porcentaje.Value : DBNull.Value);
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_factura", SqlDbType.VarChar, 20, oDetalle.numero_factura);
+                obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, oDetalle.codigo_prod);
+                obj.AgregarParametro(ParameterDirection.Input, "@precio_unitario", SqlDbType.Decimal, 0, oDetalle.precio_unitario);
+                if (obj.EjecutarSentencia("sp_Insertar_DetalleFactura", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarDetalleFactura(DetalleFactura oDetalle)
         {
-            string descuento = oDetalle.descuento_porcentaje.HasValue
-                ? oDetalle.descuento_porcentaje.Value.ToString(CultureInfo.InvariantCulture)
-                : "0";
-            string precioUnit = oDetalle.precio_unitario.ToString(CultureInfo.InvariantCulture);
-
-            string sentencia = "UPDATE DETALLE_FACTURA SET " +
-                               "cantidad = " + oDetalle.cantidad + ", " +
-                               "descuento_porcentaje = " + descuento + ", " +
-                               "precio_unitario = " + precioUnit + " " +
-                               "WHERE num_f_codigo = " + oDetalle.num_f_codigo;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@num_f_codigo", SqlDbType.Int, 0, oDetalle.num_f_codigo);
+                obj.AgregarParametro(ParameterDirection.Input, "@cantidad", SqlDbType.Int, 0, oDetalle.cantidad);
+                obj.AgregarParametro(ParameterDirection.Input, "@descuento_porcentaje", SqlDbType.Decimal, 0,
+                    oDetalle.descuento_porcentaje.HasValue ? (object)oDetalle.descuento_porcentaje.Value : DBNull.Value);
+                obj.AgregarParametro(ParameterDirection.Input, "@precio_unitario", SqlDbType.Decimal, 0, oDetalle.precio_unitario);
+                if (obj.EjecutarSentencia("sp_Actualizar_DetalleFactura", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarDetalleFactura(int num_f_codigo)
         {
-            string sentencia = "DELETE FROM DETALLE_FACTURA WHERE num_f_codigo = " + num_f_codigo;
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@num_f_codigo", SqlDbType.Int, 0, num_f_codigo);
+                if (obj.EjecutarSentencia("sp_Eliminar_DetalleFactura", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
-        private static DetalleFactura ReadDetalle(SqlDataReader dr)
+        public static List<DetalleFactura> ListarDetalleFactura()
+        {
+            List<DetalleFactura> lista = new List<DetalleFactura>();
+            using (ConexionBD obj = new ConexionBD())
+            {
+                if (obj.Consultar("sp_Listar_DetalleFactura", true))
+                {
+                    SqlDataReader dr = obj.Reader;
+                    while (dr.Read()) lista.Add(MapDetalle(dr));
+                }
+            }
+            return lista;
+        }
+
+        public static List<DetalleFactura> ListarDetalleFacturaPorFactura(string numero_factura)
+        {
+            List<DetalleFactura> lista = new List<DetalleFactura>();
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_factura", SqlDbType.VarChar, 20, numero_factura);
+                if (obj.Consultar("sp_Listar_DetalleFactura_PorFactura", true))
+                {
+                    SqlDataReader dr = obj.Reader;
+                    while (dr.Read()) lista.Add(MapDetalle(dr));
+                }
+            }
+            return lista;
+        }
+
+        public static DetalleFactura ConsultarDetalleFactura(int num_f_codigo)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@num_f_codigo", SqlDbType.Int, 0, num_f_codigo);
+                if (obj.Consultar("sp_Consultar_DetalleFactura", true))
+                {
+                    SqlDataReader dr = obj.Reader;
+                    if (dr.Read()) return MapDetalle(dr);
+                }
+            }
+            return null;
+        }
+
+        private static DetalleFactura MapDetalle(SqlDataReader dr)
         {
             return new DetalleFactura()
             {
@@ -92,56 +122,6 @@ namespace NewLife.Data
                 codigo_prod = dr["codigo_prod"].ToString(),
                 precio_unitario = dr["precio_unitario"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["precio_unitario"])
             };
-        }
-
-        public static List<DetalleFactura> ListarDetalleFactura()
-        {
-            List<DetalleFactura> lista = new List<DetalleFactura>();
-            string sentencia = "SELECT num_f_codigo, cantidad, descuento_porcentaje, numero_factura, codigo_prod, precio_unitario FROM DETALLE_FACTURA ORDER BY num_f_codigo DESC";
-
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    while (dr.Read()) lista.Add(ReadDetalle(dr));
-                }
-            }
-            return lista;
-        }
-
-        public static List<DetalleFactura> ListarDetalleFacturaPorFactura(string numero_factura)
-        {
-            List<DetalleFactura> lista = new List<DetalleFactura>();
-            string sentencia = "SELECT num_f_codigo, cantidad, descuento_porcentaje, numero_factura, codigo_prod, precio_unitario " +
-                               "FROM DETALLE_FACTURA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    while (dr.Read()) lista.Add(ReadDetalle(dr));
-                }
-            }
-            return lista;
-        }
-
-        public static DetalleFactura ConsultarDetalleFactura(int num_f_codigo)
-        {
-            DetalleFactura oDetalle = null;
-            string sentencia = "SELECT num_f_codigo, cantidad, descuento_porcentaje, numero_factura, codigo_prod, precio_unitario " +
-                               "FROM DETALLE_FACTURA WHERE num_f_codigo = " + num_f_codigo;
-
-            using (ConexionBD objEst = new ConexionBD())
-            {
-                if (objEst.Consultar(sentencia, false))
-                {
-                    SqlDataReader dr = objEst.Reader;
-                    if (dr.Read()) oDetalle = ReadDetalle(dr);
-                }
-            }
-            return oDetalle;
         }
     }
 }

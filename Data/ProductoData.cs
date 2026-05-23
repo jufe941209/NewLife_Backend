@@ -2,8 +2,8 @@ using ApiEjemplo.Data;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using System.Globalization;
 
 namespace NewLife.Data
 {
@@ -13,64 +13,59 @@ namespace NewLife.Data
 
         public static bool InsertarProducto(Producto oProducto)
         {
-            string sentencia = "INSERT INTO PRODUCTO (codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, precio, descuento, capacidad, temperatura_uso, numero_categoria, id_tipo_producto, fecha_registro, estado) VALUES ('" +
-                               oProducto.codigo_prod + "','" +
-                               oProducto.nombres + "','" +
-                               (oProducto.descripcion ?? "") + "'," +
-                               oProducto.stock_min + "," +
-                               oProducto.stock_real + ",'" +
-                               (oProducto.img_url ?? "") + "'," +
-                               oProducto.precio.ToString(CultureInfo.InvariantCulture) + "," +
-                               oProducto.descuento.ToString(CultureInfo.InvariantCulture) + "," +
-                               (!string.IsNullOrEmpty(oProducto.capacidad) ? "'" + oProducto.capacidad + "'" : "NULL") + "," +
-                               (!string.IsNullOrEmpty(oProducto.temperatura_uso) ? "'" + oProducto.temperatura_uso + "'" : "NULL") + "," +
-                               oProducto.numero_categoria + "," +
-                               oProducto.id_tipo_producto + ",GETDATE(),'Activo')";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, oProducto.codigo_prod);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oProducto.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 500, oProducto.descripcion ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@stock_min", SqlDbType.Int, 0, oProducto.stock_min);
+                obj.AgregarParametro(ParameterDirection.Input, "@stock_real", SqlDbType.Int, 0, oProducto.stock_real);
+                obj.AgregarParametro(ParameterDirection.Input, "@img_url", SqlDbType.VarChar, 500, oProducto.img_url ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@precio", SqlDbType.Decimal, 0, oProducto.precio);
+                obj.AgregarParametro(ParameterDirection.Input, "@descuento", SqlDbType.Decimal, 0, oProducto.descuento);
+                obj.AgregarParametro(ParameterDirection.Input, "@capacidad", SqlDbType.VarChar, 50, string.IsNullOrEmpty(oProducto.capacidad) ? (object)DBNull.Value : oProducto.capacidad);
+                obj.AgregarParametro(ParameterDirection.Input, "@temperatura_uso", SqlDbType.VarChar, 50, string.IsNullOrEmpty(oProducto.temperatura_uso) ? (object)DBNull.Value : oProducto.temperatura_uso);
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_categoria", SqlDbType.Int, 0, oProducto.numero_categoria);
+                obj.AgregarParametro(ParameterDirection.Input, "@id_tipo_producto", SqlDbType.Int, 0, oProducto.id_tipo_producto);
+                if (obj.EjecutarSentencia("sp_Insertar_Producto", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool ActualizarProducto(Producto oProducto)
         {
-            string sentencia = "UPDATE PRODUCTO SET " +
-                               "nombres = '" + oProducto.nombres + "', " +
-                               "descripcion = '" + (oProducto.descripcion ?? "") + "', " +
-                               "stock_min = " + oProducto.stock_min + ", " +
-                               "stock_real = " + oProducto.stock_real + ", " +
-                               "img_url = '" + (oProducto.img_url ?? "") + "', " +
-                               "precio = " + oProducto.precio.ToString(CultureInfo.InvariantCulture) + ", " +
-                               "descuento = " + oProducto.descuento.ToString(CultureInfo.InvariantCulture) + ", " +
-                               "estado = '" + (oProducto.estado ?? "Activo") + "', " +
-                               "capacidad = " + (!string.IsNullOrEmpty(oProducto.capacidad) ? "'" + oProducto.capacidad.Replace("'", "''") + "'" : "NULL") + ", " +
-                               "temperatura_uso = " + (!string.IsNullOrEmpty(oProducto.temperatura_uso) ? "'" + oProducto.temperatura_uso.Replace("'", "''") + "'" : "NULL") + ", " +
-                               "numero_categoria = " + oProducto.numero_categoria + ", " +
-                               "id_tipo_producto = " + oProducto.id_tipo_producto + " " +
-                               "WHERE codigo_prod = '" + oProducto.codigo_prod.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, oProducto.codigo_prod);
+                obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oProducto.nombres);
+                obj.AgregarParametro(ParameterDirection.Input, "@descripcion", SqlDbType.VarChar, 500, oProducto.descripcion ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@stock_min", SqlDbType.Int, 0, oProducto.stock_min);
+                obj.AgregarParametro(ParameterDirection.Input, "@stock_real", SqlDbType.Int, 0, oProducto.stock_real);
+                obj.AgregarParametro(ParameterDirection.Input, "@img_url", SqlDbType.VarChar, 500, oProducto.img_url ?? "");
+                obj.AgregarParametro(ParameterDirection.Input, "@precio", SqlDbType.Decimal, 0, oProducto.precio);
+                obj.AgregarParametro(ParameterDirection.Input, "@descuento", SqlDbType.Decimal, 0, oProducto.descuento);
+                obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oProducto.estado ?? "Activo");
+                obj.AgregarParametro(ParameterDirection.Input, "@capacidad", SqlDbType.VarChar, 50, string.IsNullOrEmpty(oProducto.capacidad) ? (object)DBNull.Value : oProducto.capacidad);
+                obj.AgregarParametro(ParameterDirection.Input, "@temperatura_uso", SqlDbType.VarChar, 50, string.IsNullOrEmpty(oProducto.temperatura_uso) ? (object)DBNull.Value : oProducto.temperatura_uso);
+                obj.AgregarParametro(ParameterDirection.Input, "@numero_categoria", SqlDbType.Int, 0, oProducto.numero_categoria);
+                obj.AgregarParametro(ParameterDirection.Input, "@id_tipo_producto", SqlDbType.Int, 0, oProducto.id_tipo_producto);
+                if (obj.EjecutarSentencia("sp_Actualizar_Producto", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
 
         public static bool EliminarProducto(string codigo_prod)
         {
-            string sentencia = "DELETE FROM PRODUCTO WHERE codigo_prod = '" + codigo_prod + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, codigo_prod);
+                if (obj.EjecutarSentencia("sp_Eliminar_Producto", true))
                     return true;
-                ultimoError = objEst.Error;
+                ultimoError = obj.Error;
                 return false;
             }
         }
@@ -78,36 +73,13 @@ namespace NewLife.Data
         public static List<Producto> ListarProductos()
         {
             List<Producto> lista = new List<Producto>();
-            string sentencia = "SELECT codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, " +
-                               "fecha_registro, precio, ISNULL(descuento,0) AS descuento, estado, capacidad, " +
-                               "temperatura_uso, numero_categoria, id_tipo_producto FROM PRODUCTO ORDER BY nombres";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                if (obj.Consultar("sp_Listar_Productos", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     while (dr.Read())
-                    {
-                        lista.Add(new Producto()
-                        {
-                            codigo_prod = dr["codigo_prod"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString(),
-                            stock_min = Convert.ToInt32(dr["stock_min"]),
-                            stock_real = Convert.ToInt32(dr["stock_real"]),
-                            img_url = dr["img_url"] == DBNull.Value ? "" : dr["img_url"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            fecha_ultima_modificacion = null,
-                            precio = Convert.ToDecimal(dr["precio"]),
-                            descuento = Convert.ToDecimal(dr["descuento"]),
-                            estado = dr["estado"].ToString(),
-                            capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
-                            temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
-                            numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
-                            id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"])
-                        });
-                    }
+                        lista.Add(MapProducto(dr));
                 }
             }
             return lista;
@@ -115,51 +87,26 @@ namespace NewLife.Data
 
         public static Producto ConsultarProducto(string codigo_prod)
         {
-            Producto oProducto = null;
-            string sentencia = "SELECT codigo_prod, nombres, descripcion, stock_min, stock_real, img_url, " +
-                               "fecha_registro, precio, ISNULL(descuento,0) AS descuento, estado, capacidad, " +
-                               "temperatura_uso, numero_categoria, id_tipo_producto FROM PRODUCTO " +
-                               "WHERE codigo_prod = '" + codigo_prod.Replace("'", "''") + "'";
-
-            using (ConexionBD objEst = new ConexionBD())
+            using (ConexionBD obj = new ConexionBD())
             {
-                if (objEst.Consultar(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, codigo_prod);
+                if (obj.Consultar("sp_Consultar_Producto", true))
                 {
-                    SqlDataReader dr = objEst.Reader;
+                    SqlDataReader dr = obj.Reader;
                     if (dr.Read())
-                    {
-                        oProducto = new Producto()
-                        {
-                            codigo_prod = dr["codigo_prod"].ToString(),
-                            nombres = dr["nombres"].ToString(),
-                            descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString(),
-                            stock_min = Convert.ToInt32(dr["stock_min"]),
-                            stock_real = Convert.ToInt32(dr["stock_real"]),
-                            img_url = dr["img_url"] == DBNull.Value ? "" : dr["img_url"].ToString(),
-                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                            fecha_ultima_modificacion = null,
-                            precio = Convert.ToDecimal(dr["precio"]),
-                            descuento = Convert.ToDecimal(dr["descuento"]),
-                            estado = dr["estado"].ToString(),
-                            capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
-                            temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
-                            numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
-                            id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"])
-                        };
-                    }
+                        return MapProducto(dr);
                 }
             }
-            return oProducto;
+            return null;
         }
 
         public static bool ReducirStock(string codigo_prod, int cantidad)
         {
-            string sentencia = "UPDATE PRODUCTO SET stock_real = CASE WHEN stock_real >= " + cantidad +
-                               " THEN stock_real - " + cantidad +
-                               " ELSE 0 END WHERE codigo_prod = '" + codigo_prod.Replace("'", "''") + "'";
             using (ConexionBD obj = new ConexionBD())
             {
-                if (obj.EjecutarSentencia(sentencia, false))
+                obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, codigo_prod);
+                obj.AgregarParametro(ParameterDirection.Input, "@cantidad", SqlDbType.Int, 0, cantidad);
+                if (obj.EjecutarSentencia("sp_ReducirStock_Producto", true))
                     return true;
                 ultimoError = obj.Error;
                 return false;
@@ -188,6 +135,28 @@ namespace NewLife.Data
                     return "Columna stock_real añadida o ya existente.";
                 return "Error: " + obj.Error;
             }
+        }
+
+        private static Producto MapProducto(SqlDataReader dr)
+        {
+            return new Producto()
+            {
+                codigo_prod = dr["codigo_prod"].ToString(),
+                nombres = dr["nombres"].ToString(),
+                descripcion = dr["descripcion"] == DBNull.Value ? "" : dr["descripcion"].ToString(),
+                stock_min = Convert.ToInt32(dr["stock_min"]),
+                stock_real = Convert.ToInt32(dr["stock_real"]),
+                img_url = dr["img_url"] == DBNull.Value ? "" : dr["img_url"].ToString(),
+                fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                fecha_ultima_modificacion = null,
+                precio = Convert.ToDecimal(dr["precio"]),
+                descuento = Convert.ToDecimal(dr["descuento"]),
+                estado = dr["estado"].ToString(),
+                capacidad = dr["capacidad"] == DBNull.Value ? null : dr["capacidad"].ToString(),
+                temperatura_uso = dr["temperatura_uso"] == DBNull.Value ? null : dr["temperatura_uso"].ToString(),
+                numero_categoria = Convert.ToInt32(dr["numero_categoria"]),
+                id_tipo_producto = Convert.ToInt32(dr["id_tipo_producto"])
+            };
         }
     }
 }
