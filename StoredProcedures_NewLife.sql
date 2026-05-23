@@ -188,6 +188,14 @@ BEGIN
     SELECT COUNT(*) FROM RESPONSABLE WHERE correo=@correo
 END
 GO
+CREATE OR ALTER PROCEDURE sp_Listar_Responsables
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT cedula_resp,nombres,telefono,correo,ISNULL(contrasena,'111111') AS contrasena,fecha_registro,estado
+    FROM RESPONSABLE
+END
+GO
 
 -- ============================================================
 -- PRODUCTO
