@@ -1,9 +1,23 @@
 -- ============================================================
--- STORED PROCEDURES FALTANTES - NewLife
--- Solo los que NO existen: Consultar, Actualizar, Eliminar
--- + especiales: Login, CambiarContrasena, ExisteCorreo, ReducirStock, Verificacion
+-- STORED PROCEDURES - NewLife
+-- Incluye: SPs faltantes + actualizacion de sp_Listar_Productos
+-- (el SP existente no tenia columnas nuevas: descuento, stock_real, capacidad, temperatura_uso)
 -- Ejecutar en Azure SQL db_newLife
 -- ============================================================
+
+-- sp_Listar_Productos: actualizar para incluir todas las columnas actuales
+GO
+CREATE OR ALTER PROCEDURE sp_Listar_Productos
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT codigo_prod, nombres, descripcion, stock_min,
+           ISNULL(stock_real, 0) AS stock_real, img_url, fecha_registro,
+           precio, ISNULL(descuento, 0) AS descuento, estado,
+           capacidad, temperatura_uso, numero_categoria, id_tipo_producto
+    FROM PRODUCTO ORDER BY nombres
+END
+GO
 
 -- ============================================================
 -- CLIENTE
