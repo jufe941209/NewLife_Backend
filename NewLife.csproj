@@ -150,6 +150,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="applicationHost.xdt" />
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
   </ItemGroup>
@@ -159,6 +160,8 @@
     <Compile Include="Controllers\CategoriaController.cs" />
     <Compile Include="Controllers\ClienteController.cs" />
     <Compile Include="Controllers\DespachoController.cs" />
+    <Compile Include="Controllers\HealthController.cs" />
+    <Compile Include="Controllers\VerificacionController.cs" />
     <Compile Include="Controllers\DetalleFacturaController.cs" />
     <Compile Include="Controllers\DomiciliarioController.cs" />
     <Compile Include="Controllers\FacturaVentaController.cs" />
@@ -170,6 +173,7 @@
     <Compile Include="Data\CategoriaData.cs" />
     <Compile Include="Data\ClienteData.cs" />
     <Compile Include="Data\ConexionBD.cs" />
+    <Compile Include="Data\VerificacionData.cs" />
     <Compile Include="Data\DespachoData.cs" />
     <Compile Include="Data\DetalleFacturaData.cs" />
     <Compile Include="Data\DomiciliarioData.cs" />
@@ -192,6 +196,7 @@
     <Compile Include="Models\Responsable.cs" />
     <Compile Include="Models\TipoProducto.cs" />
     <Compile Include="Models\Transporte.cs" />
+    <Compile Include="Helpers\EmailHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -207,6 +212,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Helpers\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

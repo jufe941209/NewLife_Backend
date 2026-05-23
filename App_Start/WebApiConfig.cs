@@ -11,11 +11,14 @@ namespace NewLife
     {
         public static void Register(HttpConfiguration config)
         {
-            // Configuración y servicios de Web API
-
-            // 2. Ahora EnableCorsAttribute funcionará correctamente
+            // CORS
             var cors = new EnableCorsAttribute("*", "*", "*");
             config.EnableCors(cors);
+
+            // Forzar JSON siempre — eliminar el formatter XML por completo
+            config.Formatters.Remove(config.Formatters.XmlFormatter);
+            config.Formatters.JsonFormatter.SupportedMediaTypes.Add(
+                new System.Net.Http.Headers.MediaTypeHeaderValue("text/html"));
 
             // Rutas de Web API
             config.MapHttpAttributeRoutes();

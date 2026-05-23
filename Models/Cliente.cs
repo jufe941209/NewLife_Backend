@@ -15,7 +15,7 @@ namespace NewLife.Models
         public string telefono { get; set; }
         public string correo { get; set; }
 
-        [JsonIgnore]
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string contrasena { get; set; }
 
         public DateTime fecha_registro { get; set; }

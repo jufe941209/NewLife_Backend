@@ -12,7 +12,6 @@ namespace NewLife.Data
 
         public static bool InsertarTransporte(Transporte oTransporte)
         {
-            ConexionBD objEst = new ConexionBD();
             string estado = string.IsNullOrEmpty(oTransporte.estado) ? "Activo" : oTransporte.estado;
             string sentencia = "INSERT INTO TRANSPORTE (cedula_domi, placa, tipo, descripcion, estado) VALUES ('" +
                                oTransporte.cedula_domi + "','" +
@@ -20,55 +19,68 @@ namespace NewLife.Data
                                (oTransporte.tipo ?? "") + "','" +
                                (oTransporte.descripcion ?? "") + "','" +
                                estado + "')";
-            if (objEst.EjecutarSentencia(sentencia, false))
-            { ultimoError = ""; objEst = null; return true; }
-            else
-            { ultimoError = objEst.Error; objEst = null; return false; }
+
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                { ultimoError = ""; return true; }
+                ultimoError = objEst.Error;
+                return false;
+            }
         }
 
         public static bool ActualizarTransporte(Transporte oTransporte)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "UPDATE TRANSPORTE SET " +
                                "cedula_domi = '" + oTransporte.cedula_domi + "', " +
                                "tipo = '" + (oTransporte.tipo ?? "") + "', " +
                                "descripcion = '" + (oTransporte.descripcion ?? "") + "', " +
                                "estado = '" + (oTransporte.estado ?? "Activo") + "' " +
                                "WHERE placa = '" + oTransporte.placa + "'";
-            if (objEst.EjecutarSentencia(sentencia, false))
-            { ultimoError = ""; objEst = null; return true; }
-            else
-            { ultimoError = objEst.Error; objEst = null; return false; }
+
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                { ultimoError = ""; return true; }
+                ultimoError = objEst.Error;
+                return false;
+            }
         }
 
         public static bool EliminarTransporte(string placa)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "DELETE FROM TRANSPORTE WHERE placa = '" + placa + "'";
-            if (objEst.EjecutarSentencia(sentencia, false))
-            { ultimoError = ""; objEst = null; return true; }
-            else
-            { ultimoError = objEst.Error; objEst = null; return false; }
+
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                { ultimoError = ""; return true; }
+                ultimoError = objEst.Error;
+                return false;
+            }
         }
 
         public static List<Transporte> ListarTransportes()
         {
             List<Transporte> lista = new List<Transporte>();
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT cedula_domi, placa, tipo, descripcion, estado FROM TRANSPORTE ORDER BY placa";
-            if (objEst.Consultar(sentencia, false))
+
+            using (ConexionBD objEst = new ConexionBD())
             {
-                SqlDataReader dr = objEst.Reader;
-                while (dr.Read())
+                if (objEst.Consultar(sentencia, false))
                 {
-                    lista.Add(new Transporte()
+                    SqlDataReader dr = objEst.Reader;
+                    while (dr.Read())
                     {
-                        cedula_domi = dr["cedula_domi"].ToString(),
-                        placa = dr["placa"].ToString(),
-                        tipo = dr["tipo"].ToString(),
-                        descripcion = dr["descripcion"].ToString(),
-                        estado = dr["estado"].ToString()
-                    });
+                        lista.Add(new Transporte()
+                        {
+                            cedula_domi = dr["cedula_domi"].ToString(),
+                            placa = dr["placa"].ToString(),
+                            tipo = dr["tipo"].ToString(),
+                            descripcion = dr["descripcion"].ToString(),
+                            estado = dr["estado"].ToString()
+                        });
+                    }
                 }
             }
             return lista;
@@ -77,21 +89,24 @@ namespace NewLife.Data
         public static Transporte ConsultarTransporte(string placa)
         {
             Transporte oTransporte = null;
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT cedula_domi, placa, tipo, descripcion, estado FROM TRANSPORTE WHERE placa = '" + placa + "'";
-            if (objEst.Consultar(sentencia, false))
+
+            using (ConexionBD objEst = new ConexionBD())
             {
-                SqlDataReader dr = objEst.Reader;
-                if (dr.Read())
+                if (objEst.Consultar(sentencia, false))
                 {
-                    oTransporte = new Transporte()
+                    SqlDataReader dr = objEst.Reader;
+                    if (dr.Read())
                     {
-                        cedula_domi = dr["cedula_domi"].ToString(),
-                        placa = dr["placa"].ToString(),
-                        tipo = dr["tipo"].ToString(),
-                        descripcion = dr["descripcion"].ToString(),
-                        estado = dr["estado"].ToString()
-                    };
+                        oTransporte = new Transporte()
+                        {
+                            cedula_domi = dr["cedula_domi"].ToString(),
+                            placa = dr["placa"].ToString(),
+                            tipo = dr["tipo"].ToString(),
+                            descripcion = dr["descripcion"].ToString(),
+                            estado = dr["estado"].ToString()
+                        };
+                    }
                 }
             }
             return oTransporte;

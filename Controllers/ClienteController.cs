@@ -5,8 +5,33 @@ using System.Web.Http;
 
 namespace NewLife.Controllers
 {
+    public class LoginClienteRequest
+    {
+        public string correo { get; set; }
+        public string contrasena { get; set; }
+    }
+
     public class ClienteController : ApiController
     {
+        // POST api/cliente/login
+        [HttpPost]
+        [Route("api/cliente/login")]
+        public IHttpActionResult Login([FromBody] LoginClienteRequest req)
+        {
+            if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.contrasena))
+                return BadRequest("Correo y contraseña requeridos.");
+            var cliente = ClienteData.LoginCliente(req.correo, req.contrasena);
+            if (cliente != null)
+                return Ok(new { success = true, cliente });
+            // Verificar si existe pero inactivo o contraseña incorrecta
+            var todos = ClienteData.ListarClientes();
+            var porCorreo = todos.Find(c => c.correo == req.correo);
+            if (porCorreo == null)
+                return Ok(new { success = false, message = "No existe una cuenta con ese correo." });
+            if (porCorreo.estado == "Inactivo")
+                return Ok(new { success = false, message = "Esta cuenta fue desactivada. Contacta al administrador." });
+            return Ok(new { success = false, message = "Contraseña incorrecta." });
+        }
         // GET api/cliente
         [HttpGet]
         public IHttpActionResult Get()

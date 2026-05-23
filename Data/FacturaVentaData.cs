@@ -10,119 +10,103 @@ namespace NewLife.Data
     {
         public static string ultimoError = "";
 
-        // INSERTAR
         public static bool InsertarFacturaVenta(FacturaVenta oFactura)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "INSERT INTO FACTURA_VENTA (numero_factura, fecha, metodo_pago, estado_pago, direccion_envio, cedula_cli) VALUES ('" +
                                oFactura.numero_factura.Replace("'", "''") + "', GETDATE(), '" +
                                oFactura.metodo_pago.Replace("'", "''") + "', 'Pendiente', '" +
                                (oFactura.direccion_envio ?? "").Replace("'", "''") + "', '" +
                                oFactura.cedula_cli.Replace("'", "''") + "')";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                objEst = null;
-                return true;
-            }
-            else
-            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                    return true;
                 ultimoError = objEst.Error;
-                objEst = null;
                 return false;
             }
         }
 
-        // ACTUALIZAR
         public static bool ActualizarFacturaVenta(FacturaVenta oFactura)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "UPDATE FACTURA_VENTA SET " +
                                "metodo_pago = '" + oFactura.metodo_pago.Replace("'", "''") + "', " +
                                "estado_pago = '" + oFactura.estado_pago.Replace("'", "''") + "', " +
                                "direccion_envio = '" + (oFactura.direccion_envio ?? "").Replace("'", "''") + "' " +
                                "WHERE numero_factura = '" + oFactura.numero_factura.Replace("'", "''") + "'";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                objEst = null;
-                return true;
-            }
-            else
-            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                    return true;
                 ultimoError = objEst.Error;
-                objEst = null;
                 return false;
             }
         }
 
-        // ELIMINAR
         public static bool EliminarFacturaVenta(string numero_factura)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "DELETE FROM DETALLE_FACTURA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'; " +
                                "DELETE FROM FACTURA_VENTA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                objEst = null;
-                return true;
-            }
-            else
-            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                    return true;
                 ultimoError = objEst.Error;
-                objEst = null;
                 return false;
             }
         }
 
-        // LISTAR
         public static List<FacturaVenta> ListarFacturasVenta()
         {
             List<FacturaVenta> lista = new List<FacturaVenta>();
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT numero_factura, fecha, metodo_pago, estado_pago, direccion_envio, cedula_cli FROM FACTURA_VENTA ORDER BY fecha DESC";
 
-            if (objEst.Consultar(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                SqlDataReader dr = objEst.Reader;
-                while (dr.Read())
+                if (objEst.Consultar(sentencia, false))
                 {
-                    lista.Add(new FacturaVenta()
+                    SqlDataReader dr = objEst.Reader;
+                    while (dr.Read())
                     {
-                        numero_factura = dr["numero_factura"].ToString(),
-                        fecha = Convert.ToDateTime(dr["fecha"]),
-                        metodo_pago = dr["metodo_pago"].ToString(),
-                        estado_pago = dr["estado_pago"].ToString(),
-                        direccion_envio = dr["direccion_envio"].ToString(),
-                        cedula_cli = dr["cedula_cli"].ToString()
-                    });
+                        lista.Add(new FacturaVenta()
+                        {
+                            numero_factura = dr["numero_factura"].ToString(),
+                            fecha = Convert.ToDateTime(dr["fecha"]),
+                            metodo_pago = dr["metodo_pago"].ToString(),
+                            estado_pago = dr["estado_pago"].ToString(),
+                            direccion_envio = dr["direccion_envio"].ToString(),
+                            cedula_cli = dr["cedula_cli"].ToString()
+                        });
+                    }
                 }
             }
             return lista;
         }
 
-        // CONSULTAR
         public static FacturaVenta ConsultarFacturaVenta(string numero_factura)
         {
             FacturaVenta oFactura = null;
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT numero_factura, fecha, metodo_pago, estado_pago, direccion_envio, cedula_cli FROM FACTURA_VENTA WHERE numero_factura = '" + numero_factura.Replace("'", "''") + "'";
 
-            if (objEst.Consultar(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                SqlDataReader dr = objEst.Reader;
-                if (dr.Read())
+                if (objEst.Consultar(sentencia, false))
                 {
-                    oFactura = new FacturaVenta()
+                    SqlDataReader dr = objEst.Reader;
+                    if (dr.Read())
                     {
-                        numero_factura = dr["numero_factura"].ToString(),
-                        fecha = Convert.ToDateTime(dr["fecha"]),
-                        metodo_pago = dr["metodo_pago"].ToString(),
-                        estado_pago = dr["estado_pago"].ToString(),
-                        direccion_envio = dr["direccion_envio"].ToString(),
-                        cedula_cli = dr["cedula_cli"].ToString()
-                    };
+                        oFactura = new FacturaVenta()
+                        {
+                            numero_factura = dr["numero_factura"].ToString(),
+                            fecha = Convert.ToDateTime(dr["fecha"]),
+                            metodo_pago = dr["metodo_pago"].ToString(),
+                            estado_pago = dr["estado_pago"].ToString(),
+                            direccion_envio = dr["direccion_envio"].ToString(),
+                            cedula_cli = dr["cedula_cli"].ToString()
+                        };
+                    }
                 }
             }
             return oFactura;

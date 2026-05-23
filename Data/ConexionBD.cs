@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -7,7 +7,7 @@ using System.Web;
 
 namespace ApiEjemplo.Data
 {
-    public class ConexionBD
+    public class ConexionBD : IDisposable
     {
 
         #region "Atributos"
@@ -17,7 +17,7 @@ namespace ApiEjemplo.Data
         private SqlConnection objCnnBD;
         private SqlCommand objCmdBD;
         private SqlDataReader objReader;
-        private SqlDataAdapter dapGenerico; //Intermediario para llenar el dataset
+        private SqlDataAdapter dapGenerico;
         private DataSet dts;
         private string strVrUnico;
         private SqlParameter objParametro;
@@ -56,125 +56,145 @@ namespace ApiEjemplo.Data
 
         private bool AbrirConexion()
         {
+            strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=db_newLife;Persist Security Info=False;" +
+                           "User ID=usuario_backend;Password=Ju.1013654544;" +
+                           "MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;" +
+                           "Connection Timeout=30;ConnectRetryCount=3;ConnectRetryInterval=5;" +
+                           "Max Pool Size=50;Min Pool Size=2;Pooling=True;";
+
+            for (int intento = 1; intento <= 3; intento++)
+            {
+                try
+                {
+                    objCnnBD = new SqlConnection(strCadenaCnx);
+                    objCmdBD = new SqlCommand();
+                    objCnnBD.Open();
+                    blnBDAbierta = true;
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    blnBDAbierta = false;
+                    strError = "Error al abrir la conexion -" + ex.Message;
+                    try { if (objCnnBD != null) { objCnnBD.Dispose(); objCnnBD = null; } } catch { }
+                }
+            }
+            return false;
+        }
+
+        private bool ReconectarYReintentar()
+        {
+            blnBDAbierta = false;
             try
             {
-                strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=db_newLife;Persist Security Info=False;" +
-                               "User ID=usuario_backend;Password=Ju.1013654544;" +
-                               "MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;" +
-                               "Connection Timeout=30;ConnectRetryCount=3;ConnectRetryInterval=10;";
-
-                // Siempre crear una nueva conexion para evitar reutilizar conexiones cerradas o caducadas
-                objCnnBD = new SqlConnection(strCadenaCnx);
-                objCmdBD = new SqlCommand();
-                objCnnBD.Open();
-                blnBDAbierta = true;
-                return true;
+                if (objReader != null && !objReader.IsClosed) { objReader.Close(); }
+                objReader = null;
             }
-            catch (Exception ex)
-            {
-                blnBDAbierta = false;
-                strError = "Error al abrir la conexion -" + ex.Message;
-                return false;
-            }
+            catch { }
+            try { if (objCnnBD != null) { objCnnBD.Close(); objCnnBD.Dispose(); objCnnBD = null; } } catch { }
+            return AbrirConexion();
         }
         #endregion
         #region "Metodos Publicos"
         public bool Consultar(string SentenciaSQL, bool blnCon_Parametros)
         {
-            if (SentenciaSQL == "")
+            if (SentenciaSQL == "") { strError = "Error en instrucción SQL"; return false; }
+            if (!blnBDAbierta && !AbrirConexion()) return false;
+
+            for (int intento = 1; intento <= 2; intento++)
             {
-                strError = "Error en instrucción SQL";
-                return false;
-            }
-            if (blnBDAbierta == false)
-            {
-                if (AbrirConexion() == false)
+                try
                 {
+                    objCmdBD.Connection = objCnnBD;
+                    objCmdBD.CommandType = blnCon_Parametros ? CommandType.StoredProcedure : CommandType.Text;
+                    objCmdBD.CommandText = SentenciaSQL;
+                    objReader = objCmdBD.ExecuteReader();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    strError = "Falla en ejecutar comando -" + ex.Message;
+                    if (intento < 2 && ReconectarYReintentar())
+                        continue;
                     return false;
                 }
             }
-            objCmdBD.Connection = objCnnBD;
-            if (blnCon_Parametros)
-                objCmdBD.CommandType = CommandType.StoredProcedure;
-            else
-                objCmdBD.CommandType = CommandType.Text;
-            objCmdBD.CommandText = SentenciaSQL;
-            try
-            {
-                objReader = objCmdBD.ExecuteReader();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                strError = "Falla en ejecutar comando -" + ex.Message;
-                return false;
-            }
+            return false;
         }
+
         public bool EjecutarSentencia(string SentenciaSQL, bool blnCon_Parametros)
         {
-            if (SentenciaSQL == "")
+            if (SentenciaSQL == "") { strError = "No se ha definido la sentencia a ejecutar "; return false; }
+            if (!blnBDAbierta && !AbrirConexion()) return false;
+
+            for (int intento = 1; intento <= 2; intento++)
             {
-                strError = "No se ha definido la sentencia a ejecutar ";
-                return false;
-            }
-            if (blnBDAbierta == false)
-            {
-                if (AbrirConexion() == false)
+                try
                 {
+                    objCmdBD.Connection = objCnnBD;
+                    objCmdBD.CommandType = blnCon_Parametros ? CommandType.StoredProcedure : CommandType.Text;
+                    objCmdBD.CommandText = SentenciaSQL;
+                    objCmdBD.ExecuteNonQuery();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    strError = "Error al ejecutar la instrucción -" + ex.Message;
+                    if (intento < 2 && ReconectarYReintentar())
+                        continue;
                     return false;
                 }
             }
-            objCmdBD.Connection = objCnnBD;
-            if (blnCon_Parametros)
-                objCmdBD.CommandType = CommandType.StoredProcedure;
-            else
-                objCmdBD.CommandType = CommandType.Text;
-            objCmdBD.CommandText = SentenciaSQL;
-            try
-            {
-                objCmdBD.ExecuteNonQuery();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                strError = "Error al ejecutar la instrucción -" + ex.Message;
-                return false;
-            }
+            return false;
         }
+
         public bool ConsultarValorUnico(string SentenciaSQL, bool blnCon_Parametros)
         {
-            if (SentenciaSQL == "")
+            if (SentenciaSQL == "") { strError = "No se ha definido la sentencia a ejecutar "; return false; }
+            if (!blnBDAbierta && !AbrirConexion()) return false;
+
+            for (int intento = 1; intento <= 2; intento++)
             {
-                strError = "No se ha definido la sentencia a ejecutar ";
-                return false;
-            }
-            if (blnBDAbierta == false)
-            {
-                if (AbrirConexion() == false)
+                try
                 {
+                    objCmdBD.Connection = objCnnBD;
+                    objCmdBD.CommandType = blnCon_Parametros ? CommandType.StoredProcedure : CommandType.Text;
+                    objCmdBD.CommandText = SentenciaSQL;
+                    strVrUnico = Convert.ToString(objCmdBD.ExecuteScalar());
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    strError = "Error al ejecutar instrucción -" + ex.Message;
+                    if (intento < 2 && ReconectarYReintentar())
+                        continue;
                     return false;
                 }
             }
-            objCmdBD.Connection = objCnnBD;
-            if (blnCon_Parametros)
-                objCmdBD.CommandType = CommandType.StoredProcedure;
-            else
-                objCmdBD.CommandType = CommandType.Text;
-            objCmdBD.CommandText = SentenciaSQL;
-            try
-            {
-                strVrUnico = Convert.ToString(objCmdBD.ExecuteScalar());
-                return true;
-            }
-            catch (Exception ex)
-            {
-                strError = "Error al ejecutar instrucción -" + ex.Message;
-                return false;
-            }
+            return false;
         }
+
         public void CerrarConexion()
         {
-            try { objCmdBD = null; } catch { }
+            try
+            {
+                if (objReader != null && !objReader.IsClosed)
+                {
+                    objReader.Close();
+                    objReader = null;
+                }
+            }
+            catch { }
+            try
+            {
+                if (objCmdBD != null)
+                {
+                    objCmdBD.Parameters.Clear();
+                    objCmdBD.Dispose();
+                    objCmdBD = null;
+                }
+            }
+            catch { }
             try
             {
                 if (objCnnBD != null)
@@ -190,9 +210,14 @@ namespace ApiEjemplo.Data
             }
             blnBDAbierta = false;
         }
+
+        public void Dispose()
+        {
+            CerrarConexion();
+        }
+
         public bool LlenarDataSet(string NombreTabla, string SentenciaSQL, bool blnCon_Parametros)
         {
-            // con este booleano se sabe si hay conexion abierta o no
             if (blnBDAbierta == false)
             {
                 if (AbrirConexion() == false)
@@ -219,6 +244,7 @@ namespace ApiEjemplo.Data
                 return false;
             }
         }
+
         public bool AgregarParametro(ParameterDirection Direccion, string Nombre_En_SP,
         SqlDbType TipoDato, Int16 Tamaño, object Valor)
         {

@@ -12,7 +12,6 @@ namespace NewLife.Data
 
         public static bool InsertarCliente(Cliente oCliente)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "INSERT INTO CLIENTE (numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, contrasena, tipo_cliente, estado, fecha_registro, cedula_adm) VALUES ('" +
                                oCliente.numero_identificacion.Replace("'", "''") + "','" +
                                oCliente.nombres.Replace("'", "''") + "','" +
@@ -25,15 +24,17 @@ namespace NewLife.Data
                                (oCliente.estado ?? "Activo") + "',GETDATE(),'" +
                                (oCliente.cedula_adm ?? "").Replace("'", "''") + "')";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
-            { objEst = null; return true; }
-            else
-            { ultimoError = objEst.Error; objEst = null; return false; }
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                    return true;
+                ultimoError = objEst.Error;
+                return false;
+            }
         }
 
         public static bool ActualizarCliente(Cliente oCliente)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "UPDATE CLIENTE SET " +
                                "nombres = '" + oCliente.nombres.Replace("'", "''") + "', " +
                                "tipo_documento = '" + (oCliente.tipo_documento ?? "CC").Replace("'", "''") + "', " +
@@ -45,77 +46,137 @@ namespace NewLife.Data
                                "cedula_adm = '" + (oCliente.cedula_adm ?? "").Replace("'", "''") + "' " +
                                "WHERE numero_identificacion = '" + oCliente.numero_identificacion.Replace("'", "''") + "'";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
-            { objEst = null; return true; }
-            else
-            { ultimoError = objEst.Error; objEst = null; return false; }
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                    return true;
+                ultimoError = objEst.Error;
+                return false;
+            }
         }
 
         public static bool EliminarCliente(string numero_identificacion)
         {
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "DELETE FROM CLIENTE WHERE numero_identificacion = '" + numero_identificacion.Replace("'", "''") + "'";
 
-            if (objEst.EjecutarSentencia(sentencia, false))
-            { objEst = null; return true; }
-            else
-            { ultimoError = objEst.Error; objEst = null; return false; }
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.EjecutarSentencia(sentencia, false))
+                    return true;
+                ultimoError = objEst.Error;
+                return false;
+            }
         }
 
         public static List<Cliente> ListarClientes()
         {
             List<Cliente> lista = new List<Cliente>();
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, fecha_registro, tipo_cliente, estado, cedula_adm FROM CLIENTE ORDER BY nombres";
 
-            if (objEst.Consultar(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                SqlDataReader dr = objEst.Reader;
-                while (dr.Read())
+                if (objEst.Consultar(sentencia, false))
                 {
-                    lista.Add(new Cliente()
+                    SqlDataReader dr = objEst.Reader;
+                    while (dr.Read())
                     {
-                        numero_identificacion = dr["numero_identificacion"].ToString(),
-                        nombres = dr["nombres"].ToString(),
-                        tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
-                        direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
-                        telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                        correo = dr["correo"].ToString(),
-                        fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                        tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
-                        estado = dr["estado"].ToString(),
-                        cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
-                    });
+                        lista.Add(new Cliente()
+                        {
+                            numero_identificacion = dr["numero_identificacion"].ToString(),
+                            nombres = dr["nombres"].ToString(),
+                            tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
+                            direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
+                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
+                            correo = dr["correo"].ToString(),
+                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                            tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
+                            estado = dr["estado"].ToString(),
+                            cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
+                        });
+                    }
                 }
             }
             return lista;
         }
 
+        public static Cliente LoginCliente(string correo, string contrasena)
+        {
+            Cliente oCliente = null;
+            string sentencia = "SELECT numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, fecha_registro, tipo_cliente, estado, cedula_adm FROM CLIENTE " +
+                               "WHERE correo = '" + correo.Replace("'", "''") + "' AND contrasena = '" + contrasena.Replace("'", "''") + "' AND estado = 'Activo'";
+
+            using (ConexionBD objEst = new ConexionBD())
+            {
+                if (objEst.Consultar(sentencia, false))
+                {
+                    SqlDataReader dr = objEst.Reader;
+                    if (dr.Read())
+                    {
+                        oCliente = new Cliente()
+                        {
+                            numero_identificacion = dr["numero_identificacion"].ToString(),
+                            nombres = dr["nombres"].ToString(),
+                            tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
+                            direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
+                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
+                            correo = dr["correo"].ToString(),
+                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                            tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
+                            estado = dr["estado"].ToString(),
+                            cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
+                        };
+                    }
+                }
+            }
+            return oCliente;
+        }
+
+        public static bool CambiarContrasena(string correo, string nuevaContrasena)
+        {
+            string sentencia = "UPDATE CLIENTE SET contrasena = '" + nuevaContrasena.Replace("'", "''") +
+                               "' WHERE correo = '" + correo.Replace("'", "''") + "'";
+            using (ConexionBD obj = new ConexionBD())
+            {
+                return obj.EjecutarSentencia(sentencia, false);
+            }
+        }
+
+        public static bool ExisteCorreo(string correo)
+        {
+            string sentencia = "SELECT COUNT(*) FROM CLIENTE WHERE correo = '" + correo.Replace("'", "''") + "' AND estado = 'Activo'";
+            using (ConexionBD obj = new ConexionBD())
+            {
+                return obj.ConsultarValorUnico(sentencia, false) && Convert.ToInt32(obj.ValorUnico) > 0;
+            }
+        }
+
         public static Cliente ConsultarCliente(string numero_identificacion)
         {
             Cliente oCliente = null;
-            ConexionBD objEst = new ConexionBD();
             string sentencia = "SELECT numero_identificacion, nombres, tipo_documento, direccion, telefono, correo, fecha_registro, tipo_cliente, estado, cedula_adm FROM CLIENTE WHERE numero_identificacion = '" +
                                numero_identificacion.Replace("'", "''") + "'";
 
-            if (objEst.Consultar(sentencia, false))
+            using (ConexionBD objEst = new ConexionBD())
             {
-                SqlDataReader dr = objEst.Reader;
-                if (dr.Read())
+                if (objEst.Consultar(sentencia, false))
                 {
-                    oCliente = new Cliente()
+                    SqlDataReader dr = objEst.Reader;
+                    if (dr.Read())
                     {
-                        numero_identificacion = dr["numero_identificacion"].ToString(),
-                        nombres = dr["nombres"].ToString(),
-                        tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
-                        direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
-                        telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
-                        correo = dr["correo"].ToString(),
-                        fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
-                        tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
-                        estado = dr["estado"].ToString(),
-                        cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
-                    };
+                        oCliente = new Cliente()
+                        {
+                            numero_identificacion = dr["numero_identificacion"].ToString(),
+                            nombres = dr["nombres"].ToString(),
+                            tipo_documento = dr["tipo_documento"] == DBNull.Value ? "" : dr["tipo_documento"].ToString(),
+                            direccion = dr["direccion"] == DBNull.Value ? "" : dr["direccion"].ToString(),
+                            telefono = dr["telefono"] == DBNull.Value ? "" : dr["telefono"].ToString(),
+                            correo = dr["correo"].ToString(),
+                            fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
+                            tipo_cliente = dr["tipo_cliente"] == DBNull.Value ? "" : dr["tipo_cliente"].ToString(),
+                            estado = dr["estado"].ToString(),
+                            cedula_adm = dr["cedula_adm"] == DBNull.Value ? "" : dr["cedula_adm"].ToString()
+                        };
+                    }
                 }
             }
             return oCliente;

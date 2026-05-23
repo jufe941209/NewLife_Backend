@@ -12,10 +12,7 @@ namespace NewLife.Controllers
         public IHttpActionResult Get()
         {
             List<DetalleFactura> lista = DetalleFacturaData.ListarDetalleFactura();
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         // GET api/detallefactura/1
@@ -35,10 +32,7 @@ namespace NewLife.Controllers
         public IHttpActionResult GetPorFactura(string numeroFactura)
         {
             List<DetalleFactura> lista = DetalleFacturaData.ListarDetalleFacturaPorFactura(numeroFactura);
-            if (lista.Count > 0)
-                return Ok(lista);
-            else
-                return NotFound();
+            return Ok(lista);
         }
 
         // POST api/detallefactura

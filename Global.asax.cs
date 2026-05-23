@@ -15,6 +15,7 @@ namespace NewLife
             NewLife.Data.ResponsableData.MigrarContrasena();
             NewLife.Data.ProductoData.MigrarDescuento();
             NewLife.Data.CategoriaData.MigrarCategorias();
+            NewLife.Data.VerificacionData.MigrarTablaVerificacion();
         }
     }
 }

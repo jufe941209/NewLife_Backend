@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+  <system.applicationHost>
+    <applicationPools>
+      <add name="%XDT_SITENAME%" xdt:Transform="Merge" xdt:Locator="Match(name)">
+        <processModel idleTimeout="00:00:00" />
+      </add>
+    </applicationPools>
+  </system.applicationHost>
+</configuration>
