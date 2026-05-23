@@ -27,17 +27,17 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore NewLife.csproj -PackagesDirectory packages
 
-      - name: Build with MSBuild
-        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation=publish\
+      - name: Build with MSBuild (FileSystem publish)
+        run: msbuild NewLife.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:publishUrl=.\published /p:DeleteExistingFiles=True /p:SkipInvalidConfigurations=true
 
       - name: List build output
-        run: dir publish
+        run: dir published
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: net-app
-          path: publish
+          path: published
 
   deploy:
     runs-on: windows-latest
@@ -51,7 +51,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: net-app
-          path: .
+          path: published
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'newlife-api'
           slot-name: 'Production'
-          package: .
+          package: published
