@@ -160,6 +160,7 @@
     <Compile Include="Controllers\CategoriaController.cs" />
     <Compile Include="Controllers\ClienteController.cs" />
     <Compile Include="Controllers\DespachoController.cs" />
+    <Compile Include="Controllers\FormularioController.cs" />
     <Compile Include="Controllers\HealthController.cs" />
     <Compile Include="Controllers\VerificacionController.cs" />
     <Compile Include="Controllers\DetalleFacturaController.cs" />

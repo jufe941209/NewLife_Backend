@@ -6,12 +6,10 @@ using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    [RoutePrefix("api/contacto")]
-    public class ContactoController : ApiController
+    public class FormularioController : ApiController
     {
         [HttpPost]
-        [Route("")]
-        public IHttpActionResult Enviar([FromBody] ContactoRequest request)
+        public IHttpActionResult Post([FromBody] FormularioRequest request)
         {
             if (request == null ||
                 string.IsNullOrWhiteSpace(request.nombre) ||
@@ -62,7 +60,7 @@ namespace NewLife.Controllers
                     mail.From = new MailAddress(fromAddr, fromName);
                     mail.To.Add(fromAddr);
                     mail.ReplyToList.Add(new MailAddress(request.correo, request.nombre));
-                    mail.Subject = "[Contacto NEW LIFE] " + request.asunto;
+                    mail.Subject = "[Mensaje NEW LIFE] " + request.asunto;
                     mail.Body = cuerpo;
                     mail.IsBodyHtml = true;
 
@@ -78,7 +76,7 @@ namespace NewLife.Controllers
         }
     }
 
-    public class ContactoRequest
+    public class FormularioRequest
     {
         public string nombre   { get; set; }
         public string correo   { get; set; }
