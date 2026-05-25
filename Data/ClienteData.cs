@@ -1,4 +1,5 @@
 using ApiEjemplo.Data;
+using NewLife.Helpers;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,8 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@direccion", SqlDbType.VarChar, 200, oCliente.direccion ?? "");
                 obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oCliente.telefono ?? "");
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oCliente.correo);
-                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, oCliente.contrasena ?? "111111");
+                var pwd = oCliente.contrasena ?? "111111";
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, HashHelper.EsHash(pwd) ? pwd : HashHelper.Sha256(pwd));
                 obj.AgregarParametro(ParameterDirection.Input, "@tipo_cliente", SqlDbType.VarChar, 20, oCliente.tipo_cliente ?? "Regular");
                 obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oCliente.estado ?? "Activo");
                 obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, oCliente.cedula_adm ?? "");
@@ -84,7 +86,7 @@ namespace NewLife.Data
             using (ConexionBD obj = new ConexionBD())
             {
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
-                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, contrasena);
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, HashHelper.Sha256(contrasena));
                 if (obj.Consultar("sp_Login_Cliente", true))
                 {
                     SqlDataReader dr = obj.Reader;
@@ -100,7 +102,7 @@ namespace NewLife.Data
             using (ConexionBD obj = new ConexionBD())
             {
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
-                obj.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, nuevaContrasena);
+                obj.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, HashHelper.Sha256(nuevaContrasena));
                 return obj.EjecutarSentencia("sp_CambiarContrasena_Cliente", true);
             }
         }

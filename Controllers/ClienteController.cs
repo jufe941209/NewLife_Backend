@@ -11,6 +11,13 @@ namespace NewLife.Controllers
         public string contrasena { get; set; }
     }
 
+    public class CambiarContrasenaClienteRequest
+    {
+        public string correo { get; set; }
+        public string contrasenaActual { get; set; }
+        public string contrasenaNueva { get; set; }
+    }
+
     public class ClienteController : ApiController
     {
         // POST api/cliente/login
@@ -32,6 +39,21 @@ namespace NewLife.Controllers
                 return Ok(new { success = false, message = "Esta cuenta fue desactivada. Contacta al administrador." });
             return Ok(new { success = false, message = "Contraseña incorrecta." });
         }
+        // POST api/cliente/cambiar-contrasena
+        [HttpPost]
+        [Route("api/cliente/cambiar-contrasena")]
+        public IHttpActionResult CambiarContrasena([FromBody] CambiarContrasenaClienteRequest req)
+        {
+            if (req == null || string.IsNullOrEmpty(req.correo))
+                return BadRequest("Datos inválidos.");
+            var cliente = ClienteData.LoginCliente(req.correo, req.contrasenaActual);
+            if (cliente == null)
+                return BadRequest("La contraseña actual no es correcta.");
+            bool ok = ClienteData.CambiarContrasena(req.correo, req.contrasenaNueva);
+            if (ok) return Ok("Contraseña actualizada.");
+            return BadRequest(ClienteData.ultimoError);
+        }
+
         // GET api/cliente
         [HttpGet]
         public IHttpActionResult Get()

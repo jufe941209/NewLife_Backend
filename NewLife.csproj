@@ -170,6 +170,9 @@
     <Compile Include="Controllers\ResponsableController.cs" />
     <Compile Include="Controllers\TipoProductoController.cs" />
     <Compile Include="Controllers\TransporteController.cs" />
+    <Compile Include="Controllers\ImagenesController.cs" />
+    <Compile Include="Controllers\PagosController.cs" />
+    <Compile Include="Controllers\MigracionController.cs" />
     <Compile Include="Data\AdministradorData.cs" />
     <Compile Include="Data\CategoriaData.cs" />
     <Compile Include="Data\ClienteData.cs" />
@@ -198,6 +201,7 @@
     <Compile Include="Models\TipoProducto.cs" />
     <Compile Include="Models\Transporte.cs" />
     <Compile Include="Helpers\EmailHelper.cs" />
+    <Compile Include="Helpers\HashHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

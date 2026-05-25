@@ -1,4 +1,5 @@
 using ApiEjemplo.Data;
+using NewLife.Helpers;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,8 @@ namespace NewLife.Data
             {
                 obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, oAdministrador.cedula_adm);
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oAdministrador.correo);
-                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, oAdministrador.contrasena);
+                var pwd = oAdministrador.contrasena ?? "Admin123";
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, HashHelper.EsHash(pwd) ? pwd : HashHelper.Sha256(pwd));
                 obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oAdministrador.nombres);
                 if (obj.EjecutarSentencia("sp_Insertar_Administrador", true))
                     return true;
@@ -83,13 +85,35 @@ namespace NewLife.Data
             return null;
         }
 
+        // Login seguro: busca por correo y compara hash
+        public static Administrador LoginAdministrador(string correo, string contrasena)
+        {
+            var todos = ListarAdministradores();
+            var hash = HashHelper.Sha256(contrasena);
+            return todos.Find(a => a.correo == correo && a.contrasena == hash && a.estado == "Activo");
+        }
+
+        // Actualiza solo la contraseña (ya hasheada)
+        public static bool ActualizarContrasena(string cedula_adm, string nuevaContrasenaHash)
+        {
+            using (ConexionBD obj = new ConexionBD())
+            {
+                obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, cedula_adm);
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, nuevaContrasenaHash);
+                if (obj.EjecutarSentencia("sp_ActualizarContrasena_Administrador", true))
+                    return true;
+                ultimoError = obj.Error;
+                return false;
+            }
+        }
+
         private static Administrador MapAdministrador(SqlDataReader dr)
         {
             return new Administrador()
             {
                 cedula_adm = dr["cedula_adm"].ToString(),
                 correo = dr["correo"].ToString(),
-                contrasena = dr["contrasena"].ToString(),
+                contrasena = dr["contrasena"].ToString(), // solo para comparación interna
                 nombres = dr["nombres"].ToString(),
                 fecha_registro = Convert.ToDateTime(dr["fecha_registro"]),
                 estado = dr["estado"].ToString()

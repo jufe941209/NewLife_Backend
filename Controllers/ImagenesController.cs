@@ -14,8 +14,7 @@ namespace NewLife.Controllers
         private const long TAMANO_MAXIMO = 5 * 1024 * 1024; // 5 MB
 
         [HttpPost]
-        [Route("api/imagenes/producto")]
-        public async Task<IHttpActionResult> SubirImagen()
+        public async Task<IHttpActionResult> Post()
         {
             if (!Request.Content.IsMimeMultipartContent())
                 return BadRequest("El contenido debe ser multipart/form-data.");
@@ -67,17 +66,16 @@ namespace NewLife.Controllers
         }
 
         [HttpDelete]
-        [Route("api/imagenes/producto/{nombre}")]
-        public IHttpActionResult EliminarImagen(string nombre)
+        public IHttpActionResult Delete(string id)
         {
             try
             {
                 // Solo permitir nombres de archivo simples (sin rutas)
-                if (nombre.Contains('/') || nombre.Contains('\\') || nombre.Contains(".."))
+                if (id.Contains('/') || id.Contains('\\') || id.Contains(".."))
                     return BadRequest("Nombre de archivo inválido.");
 
                 var carpeta = HttpContext.Current.Server.MapPath("~/Uploads/productos");
-                var ruta = Path.Combine(carpeta, nombre);
+                var ruta = Path.Combine(carpeta, id);
 
                 if (File.Exists(ruta))
                     File.Delete(ruta);

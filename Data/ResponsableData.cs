@@ -1,4 +1,5 @@
 using ApiEjemplo.Data;
+using NewLife.Helpers;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
@@ -31,7 +32,8 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oResponsable.nombres);
                 obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oResponsable.telefono ?? "");
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oResponsable.correo ?? "");
-                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, string.IsNullOrEmpty(oResponsable.contrasena) ? "111111" : oResponsable.contrasena);
+                var pwd = string.IsNullOrEmpty(oResponsable.contrasena) ? "111111" : oResponsable.contrasena;
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, HashHelper.EsHash(pwd) ? pwd : HashHelper.Sha256(pwd));
                 if (obj.EjecutarSentencia("sp_Insertar_Responsable", true))
                 { ultimoError = ""; return true; }
                 ultimoError = obj.Error;
@@ -47,7 +49,8 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@nombres", SqlDbType.VarChar, 100, oResponsable.nombres);
                 obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oResponsable.telefono ?? "");
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, oResponsable.correo ?? "");
-                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, oResponsable.contrasena ?? "");
+                var updPwd = oResponsable.contrasena ?? "";
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, string.IsNullOrEmpty(updPwd) ? "" : (HashHelper.EsHash(updPwd) ? updPwd : HashHelper.Sha256(updPwd)));
                 obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oResponsable.estado ?? "Activo");
                 if (obj.EjecutarSentencia("sp_Actualizar_Responsable", true))
                 { ultimoError = ""; return true; }
@@ -103,9 +106,16 @@ namespace NewLife.Data
             using (ConexionBD obj = new ConexionBD())
             {
                 obj.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, correo);
-                obj.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, nuevaContrasena);
+                obj.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, HashHelper.Sha256(nuevaContrasena));
                 return obj.EjecutarSentencia("sp_CambiarContrasena_Responsable", true);
             }
+        }
+
+        public static Responsable LoginResponsable(string correo, string contrasena)
+        {
+            var todos = ListarResponsables();
+            var hash = HashHelper.Sha256(contrasena);
+            return todos.Find(r => r.correo == correo && r.contrasena == hash && r.estado == "Activo");
         }
 
         public static bool ExisteCorreo(string correo)

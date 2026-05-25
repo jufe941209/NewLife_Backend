@@ -1,4 +1,5 @@
 using ApiEjemplo.Data;
+using NewLife.Helpers;
 using NewLife.Models;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,8 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@telefono", SqlDbType.VarChar, 20, oDomiciliario.telefono ?? "");
                 obj.AgregarParametro(ParameterDirection.Input, "@disponibilidad", SqlDbType.VarChar, 20, oDomiciliario.disponibilidad ?? "Disponible");
                 obj.AgregarParametro(ParameterDirection.Input, "@estado", SqlDbType.VarChar, 20, oDomiciliario.estado ?? "Activo");
-                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 100, oDomiciliario.contrasena ?? "111111");
+                var dPwd = oDomiciliario.contrasena ?? "111111";
+                obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, HashHelper.EsHash(dPwd) ? dPwd : HashHelper.Sha256(dPwd));
                 if (obj.EjecutarSentencia("sp_Actualizar_Domiciliario", true))
                     return true;
                 ultimoError = obj.Error;
@@ -82,6 +84,13 @@ namespace NewLife.Data
                 }
             }
             return null;
+        }
+
+        public static Domiciliario LoginDomiciliario(string cedula, string contrasena)
+        {
+            var todos = ListarDomiciliarios();
+            var hash = HashHelper.Sha256(contrasena);
+            return todos.Find(d => d.cedula_domi == cedula && d.contrasena == hash && d.estado != "Inactivo");
         }
 
         public static string LimpiarDomiciliariosPrueba()
