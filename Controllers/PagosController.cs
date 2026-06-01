@@ -15,29 +15,47 @@ namespace NewLife.Controllers
     public class FirmaRequest
     {
         public string referencia { get; set; }
-        public long montoCentavos { get; set; }
     }
 
     [RoutePrefix("api/pagos")]
     public class PagosController : ApiController
     {
+        private const decimal IVA = 0.19m;
+
         // POST /api/pagos/firma
-        // Devuelve la firma de integridad Wompi para un pago dado
+        // Calcula el total con IVA desde la BD, devuelve firma Wompi y el montoCentavos real.
         [HttpPost]
         [Route("firma")]
         public IHttpActionResult ObtenerFirma([FromBody] FirmaRequest req)
         {
-            if (req == null || string.IsNullOrEmpty(req.referencia) || req.montoCentavos <= 0)
-                return BadRequest("Referencia y monto requeridos.");
+            if (req == null || string.IsNullOrEmpty(req.referencia))
+                return BadRequest("Referencia requerida.");
+
+            // Calcular total con IVA desde los detalles de la factura
+            var detalles = DetalleFacturaData.ListarDetalleFacturaPorFactura(req.referencia);
+            if (detalles == null || detalles.Count == 0)
+                return BadRequest("No se encontraron detalles para la factura indicada.");
+
+            decimal subtotal = 0;
+            foreach (var d in detalles)
+            {
+                decimal descuento = d.descuento_porcentaje.HasValue ? d.descuento_porcentaje.Value / 100m : 0m;
+                subtotal += d.precio_unitario * d.cantidad * (1 - descuento);
+            }
+
+            // El envío gratuito aplica cuando el subtotal supera $100.000 COP (igual que en el frontend)
+            decimal envio = subtotal >= 100000m ? 0m : 15000m;
+            decimal totalConIVA = subtotal * (1 + IVA) + envio;
+            long montoCentavos = (long)Math.Round(totalConIVA * 100, MidpointRounding.AwayFromZero);
 
             string integritySecret = ConfigurationManager.AppSettings["Wompi:IntegritySecret"];
             string llavePublica = ConfigurationManager.AppSettings["Wompi:PublicKey"];
 
             // Fórmula Wompi: SHA256(referencia + montoCentavos + "COP" + integritySecret)
-            string cadena = $"{req.referencia}{req.montoCentavos}COP{integritySecret}";
+            string cadena = $"{req.referencia}{montoCentavos}COP{integritySecret}";
             string firma = ComputarSHA256(cadena);
 
-            return Ok(new { firma, llavePublica });
+            return Ok(new { firma, llavePublica, montoCentavos });
         }
 
         // POST /api/pagos/webhook
