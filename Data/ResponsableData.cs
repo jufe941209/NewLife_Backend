@@ -4,7 +4,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -15,9 +15,8 @@ namespace NewLife.Data
         public static void MigrarContrasena()
         {
             string sentencia =
-                "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'contrasena' AND Object_ID = OBJECT_ID(N'RESPONSABLE')) " +
-                "BEGIN ALTER TABLE RESPONSABLE ADD contrasena VARCHAR(255) NULL END; " +
-                "UPDATE RESPONSABLE SET contrasena = '11111' WHERE contrasena IS NULL OR contrasena = ''";
+                "ALTER TABLE responsable ADD COLUMN IF NOT EXISTS contrasena VARCHAR(255); " +
+                "UPDATE responsable SET contrasena = '11111' WHERE contrasena IS NULL OR contrasena = ''";
             using (ConexionBD obj = new ConexionBD())
             {
                 obj.EjecutarSentencia(sentencia, false);
@@ -78,7 +77,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Responsables", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapResponsable(dr));
                 }
@@ -93,7 +92,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@cedula_resp", SqlDbType.VarChar, 20, cedula_resp);
                 if (obj.Consultar("sp_Consultar_Responsable", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapResponsable(dr);
                 }
@@ -127,7 +126,7 @@ namespace NewLife.Data
             }
         }
 
-        private static Responsable MapResponsable(SqlDataReader dr)
+        private static Responsable MapResponsable(NpgsqlDataReader dr)
         {
             return new Responsable()
             {

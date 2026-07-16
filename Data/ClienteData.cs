@@ -4,7 +4,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -73,7 +73,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Clientes", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapCliente(dr));
                 }
@@ -89,7 +89,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@contrasena", SqlDbType.VarChar, 255, HashHelper.Sha256(contrasena));
                 if (obj.Consultar("sp_Login_Cliente", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapCliente(dr);
                 }
@@ -123,7 +123,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@numero_identificacion", SqlDbType.VarChar, 20, numero_identificacion);
                 if (obj.Consultar("sp_Consultar_Cliente", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapCliente(dr);
                 }
@@ -131,7 +131,7 @@ namespace NewLife.Data
             return null;
         }
 
-        private static Cliente MapCliente(SqlDataReader dr)
+        private static Cliente MapCliente(NpgsqlDataReader dr)
         {
             return new Cliente()
             {

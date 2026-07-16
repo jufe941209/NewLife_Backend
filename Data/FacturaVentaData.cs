@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -60,7 +60,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_FacturasVenta", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapFactura(dr));
                 }
@@ -75,7 +75,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@numero_factura", SqlDbType.VarChar, 20, numero_factura);
                 if (obj.Consultar("sp_Consultar_FacturaVenta", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapFactura(dr);
                 }
@@ -83,7 +83,7 @@ namespace NewLife.Data
             return null;
         }
 
-        private static FacturaVenta MapFactura(SqlDataReader dr)
+        private static FacturaVenta MapFactura(NpgsqlDataReader dr)
         {
             return new FacturaVenta()
             {

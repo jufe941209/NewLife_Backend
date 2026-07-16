@@ -4,7 +4,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -63,7 +63,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Domiciliarios", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapDomiciliario(dr));
                 }
@@ -78,7 +78,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@cedula_domi", SqlDbType.VarChar, 20, cedula_domi);
                 if (obj.Consultar("sp_Consultar_Domiciliario", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapDomiciliario(dr);
                 }
@@ -100,19 +100,19 @@ namespace NewLife.Data
             foreach (string cedula in cedulas)
             {
                 using (ConexionBD o1 = new ConexionBD())
-                    o1.EjecutarSentencia("UPDATE DESPACHO SET cc_domiciliario = NULL WHERE cc_domiciliario = '" + cedula + "'", false);
+                    o1.EjecutarSentencia("UPDATE despacho SET cc_domiciliario = NULL WHERE cc_domiciliario = '" + cedula + "'", false);
                 using (ConexionBD o2 = new ConexionBD())
-                    o2.EjecutarSentencia("DELETE FROM TRANSPORTE WHERE cedula_domi = '" + cedula + "'", false);
+                    o2.EjecutarSentencia("DELETE FROM transporte WHERE cedula_domi = '" + cedula + "'", false);
                 using (ConexionBD o3 = new ConexionBD())
                 {
-                    if (o3.EjecutarSentencia("DELETE FROM DOMICILIARIO WHERE cedula_domi = '" + cedula + "'", false))
+                    if (o3.EjecutarSentencia("DELETE FROM domiciliario WHERE cedula_domi = '" + cedula + "'", false))
                         eliminados++;
                 }
             }
             return "Eliminados: " + eliminados + " de " + cedulas.Length;
         }
 
-        private static Domiciliario MapDomiciliario(SqlDataReader dr)
+        private static Domiciliario MapDomiciliario(NpgsqlDataReader dr)
         {
             return new Domiciliario()
             {

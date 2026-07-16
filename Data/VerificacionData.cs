@@ -9,15 +9,14 @@ namespace NewLife.Data
         public static void MigrarTablaVerificacion()
         {
             string sentencia =
-                "IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CODIGOS_VERIFICACION') " +
-                "BEGIN CREATE TABLE CODIGOS_VERIFICACION (" +
-                "id INT IDENTITY(1,1) PRIMARY KEY, " +
+                "CREATE TABLE IF NOT EXISTS codigos_verificacion (" +
+                "id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, " +
                 "correo VARCHAR(255) NOT NULL, " +
                 "codigo VARCHAR(10) NOT NULL, " +
                 "tipo VARCHAR(30) NOT NULL, " +
-                "fecha_creacion DATETIME NOT NULL DEFAULT GETDATE(), " +
-                "fecha_expiracion DATETIME NOT NULL, " +
-                "usado BIT NOT NULL DEFAULT 0) END";
+                "fecha_creacion TIMESTAMP NOT NULL DEFAULT now(), " +
+                "fecha_expiracion TIMESTAMP NOT NULL, " +
+                "usado BOOLEAN NOT NULL DEFAULT false)";
 
             using (ConexionBD obj = new ConexionBD())
                 obj.EjecutarSentencia(sentencia, false);

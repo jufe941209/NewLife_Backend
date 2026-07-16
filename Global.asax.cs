@@ -11,6 +11,7 @@ namespace NewLife
     {
         protected void Application_Start()
         {
+            NewLife.Helpers.EnvLoader.CargarDotEnv();
             GlobalConfiguration.Configure(WebApiConfig.Register);
             NewLife.Data.ResponsableData.MigrarContrasena();
             NewLife.Data.ProductoData.MigrarDescuento();

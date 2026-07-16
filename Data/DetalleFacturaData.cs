@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -13,8 +13,7 @@ namespace NewLife.Data
 
         public static string MigrarPrecioUnitario()
         {
-            string sql = "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'precio_unitario' AND Object_ID = OBJECT_ID(N'DETALLE_FACTURA')) " +
-                         "BEGIN ALTER TABLE DETALLE_FACTURA ADD precio_unitario DECIMAL(10,2) NOT NULL DEFAULT 0 END";
+            string sql = "ALTER TABLE detalle_factura ADD COLUMN IF NOT EXISTS precio_unitario DECIMAL(10,2) NOT NULL DEFAULT 0";
             using (ConexionBD obj = new ConexionBD())
             {
                 if (obj.EjecutarSentencia(sql, false))
@@ -75,7 +74,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_DetalleFactura", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read()) lista.Add(MapDetalle(dr));
                 }
             }
@@ -90,7 +89,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@numero_factura", SqlDbType.VarChar, 20, numero_factura);
                 if (obj.Consultar("sp_Listar_DetalleFactura_PorFactura", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read()) lista.Add(MapDetalle(dr));
                 }
             }
@@ -104,14 +103,14 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@num_f_codigo", SqlDbType.Int, 0, num_f_codigo);
                 if (obj.Consultar("sp_Consultar_DetalleFactura", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read()) return MapDetalle(dr);
                 }
             }
             return null;
         }
 
-        private static DetalleFactura MapDetalle(SqlDataReader dr)
+        private static DetalleFactura MapDetalle(NpgsqlDataReader dr)
         {
             return new DetalleFactura()
             {

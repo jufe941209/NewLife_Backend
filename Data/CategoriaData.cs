@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -21,10 +21,10 @@ namespace NewLife.Data
             };
             foreach (var nombre in categorias)
             {
-                string sentencia = "IF NOT EXISTS (SELECT * FROM CATEGORIA WHERE nombre = '" +
-                                   nombre.Replace("'", "''") + "') " +
-                                   "INSERT INTO CATEGORIA (nombre, descripcion) VALUES ('" +
-                                   nombre.Replace("'", "''") + "', '')";
+                string sentencia = "INSERT INTO categoria (nombre, descripcion) SELECT '" +
+                                   nombre.Replace("'", "''") + "', '' " +
+                                   "WHERE NOT EXISTS (SELECT 1 FROM categoria WHERE nombre = '" +
+                                   nombre.Replace("'", "''") + "')";
                 using (ConexionBD obj = new ConexionBD())
                     obj.EjecutarSentencia(sentencia, false);
             }
@@ -38,8 +38,8 @@ namespace NewLife.Data
             using (ConexionBD obj = new ConexionBD())
             {
                 obj.EjecutarSentencia(
-                    "DELETE FROM CATEGORIA WHERE nombre NOT IN (" + nombresIn + ") " +
-                    "AND numero_categoria NOT IN (SELECT DISTINCT numero_categoria FROM PRODUCTO WHERE numero_categoria IS NOT NULL)",
+                    "DELETE FROM categoria WHERE nombre NOT IN (" + nombresIn + ") " +
+                    "AND numero_categoria NOT IN (SELECT DISTINCT numero_categoria FROM producto WHERE numero_categoria IS NOT NULL)",
                     false);
             }
         }
@@ -90,7 +90,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Categorias", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapCategoria(dr));
                 }
@@ -105,7 +105,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@numero_categoria", SqlDbType.Int, 0, numero_categoria);
                 if (obj.Consultar("sp_Consultar_Categoria", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapCategoria(dr);
                 }
@@ -113,7 +113,7 @@ namespace NewLife.Data
             return null;
         }
 
-        private static Categoria MapCategoria(SqlDataReader dr)
+        private static Categoria MapCategoria(NpgsqlDataReader dr)
         {
             return new Categoria()
             {

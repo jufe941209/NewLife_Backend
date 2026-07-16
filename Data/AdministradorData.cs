@@ -4,7 +4,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -62,7 +62,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Administradores", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapAdministrador(dr));
                 }
@@ -77,7 +77,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@cedula_adm", SqlDbType.VarChar, 20, cedula_adm);
                 if (obj.Consultar("sp_Consultar_Administrador", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapAdministrador(dr);
                 }
@@ -107,7 +107,7 @@ namespace NewLife.Data
             }
         }
 
-        private static Administrador MapAdministrador(SqlDataReader dr)
+        private static Administrador MapAdministrador(NpgsqlDataReader dr)
         {
             return new Administrador()
             {

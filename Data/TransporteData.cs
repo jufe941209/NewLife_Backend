@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -62,7 +62,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Transportes", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapTransporte(dr));
                 }
@@ -77,7 +77,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@placa", SqlDbType.VarChar, 20, placa);
                 if (obj.Consultar("sp_Consultar_Transporte", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapTransporte(dr);
                 }
@@ -85,7 +85,7 @@ namespace NewLife.Data
             return null;
         }
 
-        private static Transporte MapTransporte(SqlDataReader dr)
+        private static Transporte MapTransporte(NpgsqlDataReader dr)
         {
             return new Transporte()
             {

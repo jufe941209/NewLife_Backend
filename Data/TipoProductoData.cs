@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -57,7 +57,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_TiposProducto", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapTipoProducto(dr));
                 }
@@ -72,7 +72,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@id_tipo_producto", SqlDbType.Int, 0, id_tipo_producto);
                 if (obj.Consultar("sp_Consultar_TipoProducto", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapTipoProducto(dr);
                 }
@@ -80,7 +80,7 @@ namespace NewLife.Data
             return null;
         }
 
-        private static TipoProducto MapTipoProducto(SqlDataReader dr)
+        private static TipoProducto MapTipoProducto(NpgsqlDataReader dr)
         {
             return new TipoProducto()
             {

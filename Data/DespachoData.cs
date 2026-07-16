@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -65,7 +65,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Despachos", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapDespacho(dr));
                 }
@@ -80,7 +80,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@numero_despacho", SqlDbType.Int, 0, numero_despacho);
                 if (obj.Consultar("sp_Consultar_Despacho", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapDespacho(dr);
                 }
@@ -95,7 +95,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Despachos_Disponibles", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapDespacho(dr));
                 }
@@ -114,7 +114,7 @@ namespace NewLife.Data
             }
         }
 
-        private static Despacho MapDespacho(SqlDataReader dr)
+        private static Despacho MapDespacho(NpgsqlDataReader dr)
         {
             return new Despacho()
             {

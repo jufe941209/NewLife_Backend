@@ -3,7 +3,7 @@ using NewLife.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Npgsql;
 
 namespace NewLife.Data
 {
@@ -77,7 +77,7 @@ namespace NewLife.Data
             {
                 if (obj.Consultar("sp_Listar_Productos", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     while (dr.Read())
                         lista.Add(MapProducto(dr));
                 }
@@ -92,7 +92,7 @@ namespace NewLife.Data
                 obj.AgregarParametro(ParameterDirection.Input, "@codigo_prod", SqlDbType.VarChar, 20, codigo_prod);
                 if (obj.Consultar("sp_Consultar_Producto", true))
                 {
-                    SqlDataReader dr = obj.Reader;
+                    NpgsqlDataReader dr = obj.Reader;
                     if (dr.Read())
                         return MapProducto(dr);
                 }
@@ -116,8 +116,7 @@ namespace NewLife.Data
         public static void MigrarDescuento()
         {
             string sentencia =
-                "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'descuento' AND Object_ID = OBJECT_ID(N'PRODUCTO')) " +
-                "BEGIN ALTER TABLE PRODUCTO ADD descuento DECIMAL(5,2) NOT NULL DEFAULT 0 END";
+                "ALTER TABLE producto ADD COLUMN IF NOT EXISTS descuento DECIMAL(5,2) NOT NULL DEFAULT 0";
             using (ConexionBD obj = new ConexionBD())
             {
                 obj.EjecutarSentencia(sentencia, false);
@@ -127,8 +126,7 @@ namespace NewLife.Data
         public static string MigrarStockReal()
         {
             string sentencia =
-                "IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'stock_real' AND Object_ID = OBJECT_ID(N'PRODUCTO')) " +
-                "BEGIN ALTER TABLE PRODUCTO ADD stock_real INT NOT NULL DEFAULT 0 END";
+                "ALTER TABLE producto ADD COLUMN IF NOT EXISTS stock_real INT NOT NULL DEFAULT 0";
             using (ConexionBD obj = new ConexionBD())
             {
                 if (obj.EjecutarSentencia(sentencia, false))
@@ -137,7 +135,7 @@ namespace NewLife.Data
             }
         }
 
-        private static Producto MapProducto(SqlDataReader dr)
+        private static Producto MapProducto(NpgsqlDataReader dr)
         {
             return new Producto()
             {

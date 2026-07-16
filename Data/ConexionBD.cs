@@ -1,7 +1,8 @@
+using Npgsql;
+using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 
@@ -13,28 +14,27 @@ namespace ApiEjemplo.Data
         #region "Atributos"
         private string strError;
         private bool blnBDAbierta;
-        private string strCadenaCnx;
-        private SqlConnection objCnnBD;
-        private SqlCommand objCmdBD;
-        private SqlDataReader objReader;
-        private SqlDataAdapter dapGenerico;
+        private NpgsqlConnection objCnnBD;
+        private NpgsqlCommand objCmdBD;
+        private NpgsqlDataReader objReader;
+        private NpgsqlDataAdapter dapGenerico;
         private DataSet dts;
         private string strVrUnico;
-        private SqlParameter objParametro;
+        private readonly List<NpgsqlParameter> listaParametros;
         #endregion
         #region "Constructor"
         public ConexionBD()
         {
-            objCnnBD = new SqlConnection();
-            objCmdBD = new SqlCommand();
-            dapGenerico = new SqlDataAdapter();
+            objCnnBD = new NpgsqlConnection();
+            objCmdBD = new NpgsqlCommand();
+            dapGenerico = new NpgsqlDataAdapter();
             strVrUnico = "";
-            objParametro = new SqlParameter();
+            listaParametros = new List<NpgsqlParameter>();
             strError = "";
         }
         #endregion
         #region "Propiedades"
-        public SqlDataReader Reader
+        public NpgsqlDataReader Reader
         {
             get { return objReader; }
         }
@@ -56,17 +56,18 @@ namespace ApiEjemplo.Data
 
         private bool AbrirConexion()
         {
-            strCadenaCnx = "Server=tcp:sql-newlife.database.windows.net,1433;Initial Catalog=db_newLife;Persist Security Info=False;" +
-                           "User ID=usuario_backend;Password=Ju.1013654544;" +
-                           "MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;" +
-                           "Connection Timeout=30;ConnectRetryCount=3;ConnectRetryInterval=5;" +
-                           "Max Pool Size=50;Min Pool Size=2;Pooling=True;";
+            string strCadenaCnx = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
+            if (string.IsNullOrEmpty(strCadenaCnx))
+            {
+                strError = "No se encontro la variable de entorno POSTGRES_CONNECTION_STRING";
+                return false;
+            }
 
             for (int intento = 1; intento <= 3; intento++)
             {
                 try
                 {
-                    objCnnBD = new SqlConnection(strCadenaCnx);
+                    objCnnBD = new NpgsqlConnection(strCadenaCnx);
                     objCnnBD.Open();
                     blnBDAbierta = true;
                     return true;
@@ -93,6 +94,54 @@ namespace ApiEjemplo.Data
             try { if (objCnnBD != null) { objCnnBD.Close(); objCnnBD.Dispose(); objCnnBD = null; } } catch { }
             return AbrirConexion();
         }
+
+        // Las funciones PL/pgSQL declaran sus parametros con prefijo "p_" (ej. @correo -> p_correo)
+        // para evitar el error "column reference is ambiguous" cuando el parametro coincide
+        // con el nombre de una columna de la tabla.
+        private string ConstruirLlamadaFuncion(string nombreFuncion)
+        {
+            var argumentos = listaParametros.Select(p => "p_" + p.ParameterName + " => @" + p.ParameterName);
+            return nombreFuncion + "(" + string.Join(", ", argumentos) + ")";
+        }
+
+        private void AplicarParametros(NpgsqlCommand cmd)
+        {
+            cmd.Parameters.Clear();
+            foreach (var p in listaParametros)
+                cmd.Parameters.Add(p);
+        }
+
+        private static NpgsqlDbType MapearTipo(SqlDbType tipo)
+        {
+            switch (tipo)
+            {
+                case SqlDbType.VarChar:
+                case SqlDbType.NVarChar:
+                case SqlDbType.Char:
+                case SqlDbType.NChar:
+                case SqlDbType.Text:
+                    return NpgsqlDbType.Varchar;
+                case SqlDbType.Int:
+                case SqlDbType.SmallInt:
+                case SqlDbType.TinyInt:
+                    return NpgsqlDbType.Integer;
+                case SqlDbType.BigInt:
+                    return NpgsqlDbType.Bigint;
+                case SqlDbType.Decimal:
+                case SqlDbType.Money:
+                    return NpgsqlDbType.Numeric;
+                case SqlDbType.Date:
+                    return NpgsqlDbType.Date;
+                case SqlDbType.DateTime:
+                case SqlDbType.DateTime2:
+                case SqlDbType.SmallDateTime:
+                    return NpgsqlDbType.Timestamp;
+                case SqlDbType.Bit:
+                    return NpgsqlDbType.Boolean;
+                default:
+                    return NpgsqlDbType.Varchar;
+            }
+        }
         #endregion
         #region "Metodos Publicos"
         public bool Consultar(string SentenciaSQL, bool blnCon_Parametros)
@@ -105,8 +154,11 @@ namespace ApiEjemplo.Data
                 try
                 {
                     objCmdBD.Connection = objCnnBD;
-                    objCmdBD.CommandType = blnCon_Parametros ? CommandType.StoredProcedure : CommandType.Text;
-                    objCmdBD.CommandText = SentenciaSQL;
+                    objCmdBD.CommandType = CommandType.Text;
+                    objCmdBD.CommandText = blnCon_Parametros
+                        ? "SELECT * FROM " + ConstruirLlamadaFuncion(SentenciaSQL)
+                        : SentenciaSQL;
+                    AplicarParametros(objCmdBD);
                     objReader = objCmdBD.ExecuteReader();
                     return true;
                 }
@@ -131,8 +183,11 @@ namespace ApiEjemplo.Data
                 try
                 {
                     objCmdBD.Connection = objCnnBD;
-                    objCmdBD.CommandType = blnCon_Parametros ? CommandType.StoredProcedure : CommandType.Text;
-                    objCmdBD.CommandText = SentenciaSQL;
+                    objCmdBD.CommandType = CommandType.Text;
+                    objCmdBD.CommandText = blnCon_Parametros
+                        ? "SELECT " + ConstruirLlamadaFuncion(SentenciaSQL)
+                        : SentenciaSQL;
+                    AplicarParametros(objCmdBD);
                     objCmdBD.ExecuteNonQuery();
                     return true;
                 }
@@ -157,8 +212,11 @@ namespace ApiEjemplo.Data
                 try
                 {
                     objCmdBD.Connection = objCnnBD;
-                    objCmdBD.CommandType = blnCon_Parametros ? CommandType.StoredProcedure : CommandType.Text;
-                    objCmdBD.CommandText = SentenciaSQL;
+                    objCmdBD.CommandType = CommandType.Text;
+                    objCmdBD.CommandText = blnCon_Parametros
+                        ? "SELECT " + ConstruirLlamadaFuncion(SentenciaSQL)
+                        : SentenciaSQL;
+                    AplicarParametros(objCmdBD);
                     strVrUnico = Convert.ToString(objCmdBD.ExecuteScalar());
                     return true;
                 }
@@ -225,11 +283,11 @@ namespace ApiEjemplo.Data
                 }
             }
             objCmdBD.Connection = objCnnBD;
-            if (blnCon_Parametros)
-                objCmdBD.CommandType = CommandType.StoredProcedure;
-            else
-                objCmdBD.CommandType = CommandType.Text;
-            objCmdBD.CommandText = SentenciaSQL;
+            objCmdBD.CommandType = CommandType.Text;
+            objCmdBD.CommandText = blnCon_Parametros
+                ? "SELECT * FROM " + ConstruirLlamadaFuncion(SentenciaSQL)
+                : SentenciaSQL;
+            AplicarParametros(objCmdBD);
             try
             {
                 dts = new DataSet();
@@ -249,13 +307,14 @@ namespace ApiEjemplo.Data
         {
             try
             {
-                objParametro.Direction = Direccion;
-                objParametro.ParameterName = Nombre_En_SP;
-                objParametro.SqlDbType = TipoDato;
-                objParametro.Size = Tamaño;
-                objParametro.Value = Valor;
-                objCmdBD.Parameters.Add(objParametro);
-                objParametro = new SqlParameter();
+                var objParametro = new NpgsqlParameter
+                {
+                    Direction = Direccion,
+                    ParameterName = Nombre_En_SP.TrimStart('@'),
+                    NpgsqlDbType = MapearTipo(TipoDato),
+                    Value = Valor ?? DBNull.Value
+                };
+                listaParametros.Add(objParametro);
                 return (true);
             }
             catch (Exception ex)
