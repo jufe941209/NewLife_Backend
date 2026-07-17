@@ -15,15 +15,24 @@ namespace NewLife.Helpers
         private static string FromAddr => Environment.GetEnvironmentVariable("EMAIL_FROM")       ?? "";
         private static string FromName => Environment.GetEnvironmentVariable("EMAIL_FROM_NAME")  ?? "NEW LIFE";
 
-        public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
+        public static void Enviar(string destinatario, string asunto, string cuerpoHtml, string replyToEmail = null, string replyToNombre = null)
         {
-            var payload = new
-            {
-                sender = new { email = FromAddr, name = FromName },
-                to = new[] { new { email = destinatario } },
-                subject = asunto,
-                htmlContent = cuerpoHtml
-            };
+            object payload = string.IsNullOrEmpty(replyToEmail)
+                ? new
+                {
+                    sender = new { email = FromAddr, name = FromName },
+                    to = new[] { new { email = destinatario } },
+                    subject = asunto,
+                    htmlContent = cuerpoHtml
+                }
+                : new
+                {
+                    sender = new { email = FromAddr, name = FromName },
+                    to = new[] { new { email = destinatario } },
+                    replyTo = new { email = replyToEmail, name = replyToNombre ?? replyToEmail },
+                    subject = asunto,
+                    htmlContent = cuerpoHtml
+                };
 
             var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
             request.Headers.Add("api-key", ApiKey);

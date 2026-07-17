@@ -1,6 +1,6 @@
 using System.Net;
-using System.Net.Mail;
 using Microsoft.AspNetCore.Mvc;
+using NewLife.Helpers;
 
 namespace NewLife.Controllers
 {
@@ -20,12 +20,12 @@ namespace NewLife.Controllers
 
             try
             {
-                string host     = Environment.GetEnvironmentVariable("SMTP_HOST")      ?? "smtp.gmail.com";
-                int    port     = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
-                string user     = Environment.GetEnvironmentVariable("SMTP_USER")      ?? "";
-                string pass     = Environment.GetEnvironmentVariable("SMTP_PASS")      ?? "";
-                string fromAddr = Environment.GetEnvironmentVariable("SMTP_FROM")      ?? user;
-                string fromName = Environment.GetEnvironmentVariable("SMTP_FROM_NAME") ?? "NEW LIFE";
+                // Bandeja del negocio que recibe el mensaje de contacto (misma direccion
+                // que ya se usaba como remitente antes, ahora leida de EMAIL_FROM porque
+                // el envio pasa por Brevo -> EmailHelper, no por SMTP directo).
+                string destino = Environment.GetEnvironmentVariable("EMAIL_FROM")
+                    ?? Environment.GetEnvironmentVariable("SMTP_FROM")
+                    ?? "";
 
                 string cuerpo =
                     "<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>" +
@@ -50,22 +50,7 @@ namespace NewLife.Controllers
                     "</div></div>" +
                     "</div></div>";
 
-                using (var smtp = new SmtpClient(host, port))
-                {
-                    smtp.EnableSsl = true;
-                    smtp.Credentials = new NetworkCredential(user, pass);
-                    smtp.Timeout = 20000;
-
-                    var mail = new MailMessage();
-                    mail.From = new MailAddress(fromAddr, fromName);
-                    mail.To.Add(fromAddr);
-                    mail.ReplyToList.Add(new MailAddress(request.correo, request.nombre));
-                    mail.Subject = "[Mensaje NEW LIFE] " + request.asunto;
-                    mail.Body = cuerpo;
-                    mail.IsBodyHtml = true;
-
-                    smtp.Send(mail);
-                }
+                EmailHelper.Enviar(destino, "[Mensaje NEW LIFE] " + request.asunto, cuerpo, request.correo, request.nombre);
 
                 return Ok(new { mensaje = "Mensaje enviado correctamente." });
             }
