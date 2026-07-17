@@ -1,7 +1,9 @@
 using Microsoft.Extensions.FileProviders;
+using NewLife.Data;
 using NewLife.Helpers;
 
 EnvLoader.CargarDotEnv();
+CategoriaData.MigrarCategorias();
 
 var builder = WebApplication.CreateBuilder(args);
 
