@@ -100,6 +100,16 @@ namespace NewLife.Controllers
                 return BadRequest(DespachoData.ultimoError);
         }
 
+        // PUT api/despacho/{id}
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody] Despacho oDespacho)
+        {
+            if (oDespacho == null)
+                return BadRequest("Datos inválidos.");
+            oDespacho.numero_despacho = id;
+            return Put(oDespacho);
+        }
+
         // DELETE api/despacho/1
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)

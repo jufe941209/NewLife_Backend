@@ -51,6 +51,17 @@ namespace NewLife.Controllers
                 return BadRequest(ProductoData.ultimoError);
         }
 
+        // El frontend manda el codigo en la URL (PUT /api/producto/{id}); WebApi2 (backend viejo)
+        // lo toleraba por su ruteo por convencion, ASP.NET Core no matchea sin esta ruta explicita.
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] Producto oProducto)
+        {
+            if (oProducto == null)
+                return BadRequest("Datos inválidos.");
+            oProducto.codigo_prod = id;
+            return Put(oProducto);
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(string id)
         {

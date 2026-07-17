@@ -62,6 +62,16 @@ namespace NewLife.Controllers
                 return BadRequest(DetalleFacturaData.ultimoError);
         }
 
+        // PUT api/detallefactura/{id}
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody] DetalleFactura oDetalle)
+        {
+            if (oDetalle == null)
+                return BadRequest("Datos inválidos.");
+            oDetalle.num_f_codigo = id;
+            return Put(oDetalle);
+        }
+
         // DELETE api/detallefactura/1
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)

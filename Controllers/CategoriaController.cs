@@ -55,6 +55,16 @@ namespace NewLife.Controllers
                 return BadRequest("No se pudo actualizar la categoría.");
         }
 
+        // PUT api/categoria/{id} — el frontend manda el id en la URL
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody] Categoria oCategoria)
+        {
+            if (oCategoria == null)
+                return BadRequest("Datos inválidos.");
+            oCategoria.numero_categoria = id;
+            return Put(oCategoria);
+        }
+
         // DELETE api/categoria/1
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)

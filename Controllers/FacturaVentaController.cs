@@ -66,6 +66,15 @@ namespace NewLife.Controllers
             return Ok("Factura de venta actualizada exitosamente.");
         }
 
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] FacturaVenta oFactura)
+        {
+            if (oFactura == null)
+                return BadRequest("Datos inválidos.");
+            oFactura.numero_factura = id;
+            return Put(oFactura);
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(string id)
         {

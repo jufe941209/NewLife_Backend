@@ -51,6 +51,15 @@ namespace NewLife.Controllers
                 return BadRequest(TransporteData.ultimoError);
         }
 
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] Transporte oTransporte)
+        {
+            if (oTransporte == null)
+                return BadRequest("Datos inválidos.");
+            oTransporte.placa = id;
+            return Put(oTransporte);
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(string id)
         {

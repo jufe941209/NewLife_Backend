@@ -101,6 +101,16 @@ namespace NewLife.Controllers
                 return BadRequest("No se pudo actualizar el cliente.");
         }
 
+        // PUT api/cliente/{id}
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] Cliente oCliente)
+        {
+            if (oCliente == null)
+                return BadRequest("Datos inválidos.");
+            oCliente.numero_identificacion = id;
+            return Put(oCliente);
+        }
+
         // DELETE api/cliente/1020304050
         [HttpDelete("{id}")]
         public IActionResult Delete(string id)

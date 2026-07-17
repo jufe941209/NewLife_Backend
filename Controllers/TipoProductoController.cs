@@ -51,6 +51,15 @@ namespace NewLife.Controllers
                 return BadRequest(TipoProductoData.ultimoError);
         }
 
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody] TipoProducto oTipoProducto)
+        {
+            if (oTipoProducto == null)
+                return BadRequest("Datos inválidos.");
+            oTipoProducto.id_tipo_producto = id;
+            return Put(oTipoProducto);
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
