@@ -95,10 +95,7 @@ namespace NewLife.Controllers
             string firmaEsperada = ComputarSHA256($"{txId}{status}{montoCentavos}{timestamp}{eventsSecret}");
 
             if (checksum != firmaEsperada)
-            {
-                string secretTail = eventsSecret != null && eventsSecret.Length >= 6 ? eventsSecret.Substring(eventsSecret.Length - 6) : "(null o corto)";
-                return BadRequest("Firma de webhook inválida. DEBUG secretLen=" + (eventsSecret?.Length ?? -1) + " secretTail=" + secretTail + " esperada=" + firmaEsperada + " recibida=" + checksum);
-            }
+                return BadRequest("Firma de webhook inválida.");
 
             // Mapear estado Wompi → estado interno
             string estadoPago;
