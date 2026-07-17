@@ -1,7 +1,6 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
@@ -18,12 +17,14 @@ namespace NewLife.Controllers
         public string contrasenaNueva { get; set; }
     }
 
-    public class ClienteController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ClienteController : ControllerBase
     {
         // POST api/cliente/login
         [HttpPost]
-        [Route("api/cliente/login")]
-        public IHttpActionResult Login([FromBody] LoginClienteRequest req)
+        [Route("/api/cliente/login")]
+        public IActionResult Login([FromBody] LoginClienteRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.contrasena))
                 return BadRequest("Correo y contraseña requeridos.");
@@ -41,8 +42,8 @@ namespace NewLife.Controllers
         }
         // POST api/cliente/cambiar-contrasena
         [HttpPost]
-        [Route("api/cliente/cambiar-contrasena")]
-        public IHttpActionResult CambiarContrasena([FromBody] CambiarContrasenaClienteRequest req)
+        [Route("/api/cliente/cambiar-contrasena")]
+        public IActionResult CambiarContrasena([FromBody] CambiarContrasenaClienteRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo))
                 return BadRequest("Datos inválidos.");
@@ -56,15 +57,15 @@ namespace NewLife.Controllers
 
         // GET api/cliente
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<Cliente> lista = ClienteData.ListarClientes();
             return Ok(lista);
         }
 
         // GET api/cliente/1020304050
-        [HttpGet]
-        public IHttpActionResult Get(string id)
+        [HttpGet("{id}")]
+        public IActionResult Get(string id)
         {
             Cliente oCliente = ClienteData.ConsultarCliente(id);
             if (oCliente != null)
@@ -75,7 +76,7 @@ namespace NewLife.Controllers
 
         // POST api/cliente
         [HttpPost]
-        public IHttpActionResult Post([FromBody] Cliente oCliente)
+        public IActionResult Post([FromBody] Cliente oCliente)
         {
             if (oCliente == null)
                 return BadRequest("Datos inválidos.");
@@ -88,7 +89,7 @@ namespace NewLife.Controllers
         }
         // PUT api/cliente
         [HttpPut]
-        public IHttpActionResult Put([FromBody] Cliente oCliente)
+        public IActionResult Put([FromBody] Cliente oCliente)
         {
             if (oCliente == null)
                 return BadRequest("Datos inválidos.");
@@ -101,8 +102,8 @@ namespace NewLife.Controllers
         }
 
         // DELETE api/cliente/1020304050
-        [HttpDelete]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             bool resultado = ClienteData.EliminarCliente(id);
             if (resultado)

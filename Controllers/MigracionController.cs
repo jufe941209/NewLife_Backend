@@ -1,9 +1,9 @@
-using ApiEjemplo.Data;
+using System.Data;
+using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using NewLife.Data;
 using NewLife.Helpers;
-using System.Collections.Generic;
-using System.Text;
-using System.Web.Http;
+using ApiEjemplo.Data;
 
 namespace NewLife.Controllers
 {
@@ -12,12 +12,13 @@ namespace NewLife.Controllers
     /// Call POST /api/migracion/hashear-contrasenas once after deploying the hashing code.
     /// After migration, this endpoint can be disabled or removed.
     /// </summary>
-    [RoutePrefix("api/migracion")]
-    public class MigracionController : ApiController
+    [ApiController]
+    [Route("api/migracion")]
+    public class MigracionController : ControllerBase
     {
         [HttpPost]
         [Route("hashear-contrasenas")]
-        public IHttpActionResult HashearContrasenas()
+        public IActionResult HashearContrasenas()
         {
             var sb = new StringBuilder();
             int total = 0, migrados = 0;
@@ -31,8 +32,8 @@ namespace NewLife.Controllers
                 {
                     using (var conn = new ConexionBD())
                     {
-                        conn.AgregarParametro(System.Data.ParameterDirection.Input, "@correo", System.Data.SqlDbType.VarChar, 100, c.correo);
-                        conn.AgregarParametro(System.Data.ParameterDirection.Input, "@nuevaContrasena", System.Data.SqlDbType.VarChar, 255, HashHelper.Sha256(c.contrasena ?? "111111"));
+                        conn.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, c.correo);
+                        conn.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, HashHelper.Sha256(c.contrasena ?? "111111"));
                         conn.EjecutarSentencia("sp_CambiarContrasena_Cliente", true);
                     }
                     migrados++;
@@ -64,8 +65,8 @@ namespace NewLife.Controllers
                 {
                     using (var conn = new ConexionBD())
                     {
-                        conn.AgregarParametro(System.Data.ParameterDirection.Input, "@correo", System.Data.SqlDbType.VarChar, 100, r.correo);
-                        conn.AgregarParametro(System.Data.ParameterDirection.Input, "@nuevaContrasena", System.Data.SqlDbType.VarChar, 255, HashHelper.Sha256(r.contrasena ?? "111111"));
+                        conn.AgregarParametro(ParameterDirection.Input, "@correo", SqlDbType.VarChar, 100, r.correo);
+                        conn.AgregarParametro(ParameterDirection.Input, "@nuevaContrasena", SqlDbType.VarChar, 255, HashHelper.Sha256(r.contrasena ?? "111111"));
                         conn.EjecutarSentencia("sp_CambiarContrasena_Responsable", true);
                     }
                     respMig++;
@@ -85,7 +86,7 @@ namespace NewLife.Controllers
                     using (var conn = new ConexionBD())
                     {
                         conn.EjecutarSentencia(
-                            $"UPDATE DOMICILIARIO SET contrasena = '{hash}' WHERE cedula_domi = '{d.cedula_domi}'",
+                            $"UPDATE domiciliario SET contrasena = '{hash}' WHERE cedula_domi = '{d.cedula_domi}'",
                             false);
                     }
                     domiMig++;

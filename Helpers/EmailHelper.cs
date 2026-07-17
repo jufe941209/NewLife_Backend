@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -8,9 +7,9 @@ namespace NewLife.Helpers
 {
     public static class EmailHelper
     {
-        private static string ApiKey   => ConfigurationManager.AppSettings["BrevoApiKey"]   ?? "";
-        private static string FromAddr => ConfigurationManager.AppSettings["EmailFrom"]     ?? "";
-        private static string FromName => ConfigurationManager.AppSettings["EmailFromName"] ?? "NEW LIFE";
+        private static string ApiKey   => Environment.GetEnvironmentVariable("BREVO_API_KEY")   ?? "";
+        private static string FromAddr => Environment.GetEnvironmentVariable("EMAIL_FROM")       ?? "";
+        private static string FromName => Environment.GetEnvironmentVariable("EMAIL_FROM_NAME")  ?? "NEW LIFE";
 
         public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
         {

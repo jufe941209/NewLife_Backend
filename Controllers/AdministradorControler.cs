@@ -1,26 +1,23 @@
+using Microsoft.AspNetCore.Mvc;
 using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    [RoutePrefix("api/administrador")]
-    public class AdministradorController : ApiController
+    [ApiController]
+    [Route("api/administrador")]
+    public class AdministradorController : ControllerBase
     {
         [HttpGet]
-        [Route("")]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             var lista = AdministradorData.ListarAdministradores();
             lista.ForEach(a => a.contrasena = null);
             return Ok(lista);
         }
 
-        [HttpGet]
-        [Route("{id}")]
-        public IHttpActionResult Get(string id)
+        [HttpGet("{id}")]
+        public IActionResult Get(string id)
         {
             var oAdministrador = AdministradorData.ConsultarAdministrador(id);
             if (oAdministrador == null) return NotFound();
@@ -29,8 +26,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        [Route("")]
-        public IHttpActionResult Post([FromBody] Administrador oAdministrador)
+        public IActionResult Post([FromBody] Administrador oAdministrador)
         {
             if (oAdministrador == null) return BadRequest("Datos inválidos.");
             bool resultado = AdministradorData.InsertarAdministrador(oAdministrador);
@@ -38,9 +34,8 @@ namespace NewLife.Controllers
             return BadRequest(AdministradorData.ultimoError);
         }
 
-        [HttpPut]
-        [Route("{id}")]
-        public IHttpActionResult Put(string id, [FromBody] Administrador oAdministrador)
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] Administrador oAdministrador)
         {
             if (oAdministrador == null) return BadRequest("Datos inválidos.");
             oAdministrador.cedula_adm = id;
@@ -49,9 +44,8 @@ namespace NewLife.Controllers
             return BadRequest(AdministradorData.ultimoError);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             bool resultado = AdministradorData.EliminarAdministrador(id);
             if (resultado) return Ok("Administrador eliminado exitosamente.");
@@ -60,7 +54,7 @@ namespace NewLife.Controllers
 
         [HttpPost]
         [Route("login")]
-        public IHttpActionResult Login([FromBody] LoginRequest req)
+        public IActionResult Login([FromBody] LoginRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.contrasena))
                 return BadRequest("Correo y contraseña son requeridos.");
@@ -72,7 +66,7 @@ namespace NewLife.Controllers
 
         [HttpPost]
         [Route("cambiar-contrasena")]
-        public IHttpActionResult CambiarContrasena([FromBody] CambiarContrasenaRequest req)
+        public IActionResult CambiarContrasena([FromBody] CambiarContrasenaRequest req)
         {
             if (req == null) return BadRequest("Datos inválidos.");
             var admin = AdministradorData.LoginAdministrador(req.correo, req.contrasenaActual);

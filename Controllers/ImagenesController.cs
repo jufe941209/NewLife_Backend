@@ -1,72 +1,68 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Web;
-using System.Web.Http;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 
 namespace NewLife.Controllers
 {
-    public class ImagenesController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ImagenesController : ControllerBase
     {
         private static readonly string[] EXTENSIONES_PERMITIDAS = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
         private const long TAMANO_MAXIMO = 5 * 1024 * 1024; // 5 MB
 
-        [HttpPost]
-        public async Task<IHttpActionResult> Post()
+        private readonly IWebHostEnvironment _entorno;
+
+        public ImagenesController(IWebHostEnvironment entorno)
         {
-            if (!Request.Content.IsMimeMultipartContent())
-                return BadRequest("El contenido debe ser multipart/form-data.");
+            _entorno = entorno;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post()
+        {
+            if (Request.Form.Files.Count == 0)
+                return BadRequest("No se recibió ningún archivo.");
 
             try
             {
-                var provider = new MultipartMemoryStreamProvider();
-                await Request.Content.ReadAsMultipartAsync(provider);
+                var archivo = Request.Form.Files[0];
+                var nombreOriginal = archivo.FileName ?? "imagen";
+                var extension = Path.GetExtension(nombreOriginal).ToLower();
 
-                foreach (var content in provider.Contents)
-                {
-                    var nombreOriginal = content.Headers.ContentDisposition?.FileName?.Trim('"') ?? "imagen";
-                    var extension = Path.GetExtension(nombreOriginal).ToLower();
+                if (!EXTENSIONES_PERMITIDAS.Contains(extension))
+                    return BadRequest("Solo se permiten imágenes JPG, PNG, WebP o GIF.");
 
-                    if (!EXTENSIONES_PERMITIDAS.Contains(extension))
-                        return BadRequest("Solo se permiten imágenes JPG, PNG, WebP o GIF.");
+                if (archivo.Length > TAMANO_MAXIMO)
+                    return BadRequest("La imagen no puede superar 5 MB.");
 
-                    var bytes = await content.ReadAsByteArrayAsync();
+                if (archivo.Length == 0)
+                    return BadRequest("El archivo está vacío.");
 
-                    if (bytes.Length > TAMANO_MAXIMO)
-                        return BadRequest("La imagen no puede superar 5 MB.");
+                // Carpeta de destino (servida por Program.cs en /Uploads/productos)
+                var carpeta = Path.Combine(_entorno.ContentRootPath, "Uploads", "productos");
+                if (!Directory.Exists(carpeta))
+                    Directory.CreateDirectory(carpeta);
 
-                    if (bytes.Length == 0)
-                        return BadRequest("El archivo está vacío.");
+                // Nombre único para evitar colisiones
+                var nombreArchivo = Guid.NewGuid().ToString("N") + extension;
+                var rutaCompleta = Path.Combine(carpeta, nombreArchivo);
+                using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                    await archivo.CopyToAsync(stream);
 
-                    // Carpeta de destino en wwwroot
-                    var carpeta = HttpContext.Current.Server.MapPath("~/Uploads/productos");
-                    if (!Directory.Exists(carpeta))
-                        Directory.CreateDirectory(carpeta);
+                // URL pública del archivo
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var url = $"{baseUrl}/Uploads/productos/{nombreArchivo}";
 
-                    // Nombre único para evitar colisiones
-                    var nombreArchivo = Guid.NewGuid().ToString("N") + extension;
-                    var rutaCompleta = Path.Combine(carpeta, nombreArchivo);
-                    File.WriteAllBytes(rutaCompleta, bytes);
-
-                    // URL pública del archivo
-                    var baseUrl = Request.RequestUri.GetLeftPart(UriPartial.Authority);
-                    var url = $"{baseUrl}/Uploads/productos/{nombreArchivo}";
-
-                    return Ok(new { url, nombre = nombreArchivo });
-                }
-
-                return BadRequest("No se recibió ningún archivo.");
+                return Ok(new { url, nombre = nombreArchivo });
             }
             catch (Exception ex)
             {
-                return InternalServerError(new Exception("Error al guardar la imagen: " + ex.Message));
+                return StatusCode(500, "Error al guardar la imagen: " + ex.Message);
             }
         }
 
-        [HttpDelete]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             try
             {
@@ -74,17 +70,17 @@ namespace NewLife.Controllers
                 if (id.Contains('/') || id.Contains('\\') || id.Contains(".."))
                     return BadRequest("Nombre de archivo inválido.");
 
-                var carpeta = HttpContext.Current.Server.MapPath("~/Uploads/productos");
+                var carpeta = Path.Combine(_entorno.ContentRootPath, "Uploads", "productos");
                 var ruta = Path.Combine(carpeta, id);
 
-                if (File.Exists(ruta))
-                    File.Delete(ruta);
+                if (System.IO.File.Exists(ruta))
+                    System.IO.File.Delete(ruta);
 
                 return Ok("Imagen eliminada.");
             }
             catch (Exception ex)
             {
-                return InternalServerError(new Exception("Error al eliminar: " + ex.Message));
+                return StatusCode(500, "Error al eliminar: " + ex.Message);
             }
         }
     }

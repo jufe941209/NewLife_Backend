@@ -1,23 +1,24 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    public class CategoriaController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CategoriaController : ControllerBase
     {
         // GET api/categoria
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<Categoria> lista = CategoriaData.ListarCategorias();
             return Ok(lista);
         }
 
         // GET api/categoria/1
-        [HttpGet]
-        public IHttpActionResult Get(int id)
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
         {
             Categoria oCategoria = CategoriaData.ConsultarCategoria(id);
             if (oCategoria != null)
@@ -28,7 +29,7 @@ namespace NewLife.Controllers
 
         // POST api/categoria
         [HttpPost]
-        public IHttpActionResult Post([FromBody] Categoria oCategoria)
+        public IActionResult Post([FromBody] Categoria oCategoria)
         {
             if (oCategoria == null)
                 return BadRequest("Datos inválidos.");
@@ -42,7 +43,7 @@ namespace NewLife.Controllers
 
         // PUT api/categoria
         [HttpPut]
-        public IHttpActionResult Put([FromBody] Categoria oCategoria)
+        public IActionResult Put([FromBody] Categoria oCategoria)
         {
             if (oCategoria == null)
                 return BadRequest("Datos inválidos.");
@@ -55,8 +56,8 @@ namespace NewLife.Controllers
         }
 
         // DELETE api/categoria/1
-        [HttpDelete]
-        public IHttpActionResult Delete(int id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
         {
             bool resultado = CategoriaData.EliminarCategoria(id);
             if (resultado)

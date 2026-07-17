@@ -1,15 +1,15 @@
-using System;
-using System.Configuration;
 using System.Net;
 using System.Net.Mail;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace NewLife.Controllers
 {
-    public class FormularioController : ApiController
+    [ApiController]
+    public class FormularioController : ControllerBase
     {
         [HttpPost]
-        public IHttpActionResult Post([FromBody] FormularioRequest request)
+        [Route("api/formulario")]
+        public IActionResult Post([FromBody] FormularioRequest request)
         {
             if (request == null ||
                 string.IsNullOrWhiteSpace(request.nombre) ||
@@ -20,12 +20,12 @@ namespace NewLife.Controllers
 
             try
             {
-                string host     = ConfigurationManager.AppSettings["SmtpHost"]     ?? "smtp.gmail.com";
-                int    port     = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-                string user     = ConfigurationManager.AppSettings["SmtpUser"]     ?? "";
-                string pass     = ConfigurationManager.AppSettings["SmtpPass"]     ?? "";
-                string fromAddr = ConfigurationManager.AppSettings["SmtpFrom"]     ?? user;
-                string fromName = ConfigurationManager.AppSettings["SmtpFromName"] ?? "NEW LIFE";
+                string host     = Environment.GetEnvironmentVariable("SMTP_HOST")      ?? "smtp.gmail.com";
+                int    port     = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
+                string user     = Environment.GetEnvironmentVariable("SMTP_USER")      ?? "";
+                string pass     = Environment.GetEnvironmentVariable("SMTP_PASS")      ?? "";
+                string fromAddr = Environment.GetEnvironmentVariable("SMTP_FROM")      ?? user;
+                string fromName = Environment.GetEnvironmentVariable("SMTP_FROM_NAME") ?? "NEW LIFE";
 
                 string cuerpo =
                     "<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>" +
@@ -36,17 +36,17 @@ namespace NewLife.Controllers
                     "<div style='background:#fff;padding:32px;border:1px solid #e9ecef;border-top:none;border-radius:0 0 12px 12px;'>" +
                     "<table style='width:100%;border-collapse:collapse;'>" +
                     "<tr><td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#6c757d;width:120px;font-weight:600;'>Nombre</td>" +
-                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'>" + System.Web.HttpUtility.HtmlEncode(request.nombre) + "</td></tr>" +
+                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'>" + WebUtility.HtmlEncode(request.nombre) + "</td></tr>" +
                     "<tr><td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#6c757d;font-weight:600;'>Correo</td>" +
-                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'><a href='mailto:" + request.correo + "' style='color:#28a745;'>" + System.Web.HttpUtility.HtmlEncode(request.correo) + "</a></td></tr>" +
+                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'><a href='mailto:" + request.correo + "' style='color:#28a745;'>" + WebUtility.HtmlEncode(request.correo) + "</a></td></tr>" +
                     "<tr><td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#6c757d;font-weight:600;'>Teléfono</td>" +
-                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'>" + System.Web.HttpUtility.HtmlEncode(request.telefono ?? "-") + "</td></tr>" +
+                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'>" + WebUtility.HtmlEncode(request.telefono ?? "-") + "</td></tr>" +
                     "<tr><td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#6c757d;font-weight:600;'>Asunto</td>" +
-                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'><strong>" + System.Web.HttpUtility.HtmlEncode(request.asunto) + "</strong></td></tr>" +
+                    "<td style='padding:10px 0;border-bottom:1px solid #f1f1f1;color:#212529;'><strong>" + WebUtility.HtmlEncode(request.asunto) + "</strong></td></tr>" +
                     "</table>" +
                     "<div style='margin-top:20px;'><p style='color:#6c757d;font-weight:600;margin-bottom:8px;'>Mensaje:</p>" +
                     "<div style='background:#f8f9fa;border-left:4px solid #28a745;padding:16px;border-radius:0 8px 8px 0;color:#212529;line-height:1.6;'>" +
-                    System.Web.HttpUtility.HtmlEncode(request.mensaje).Replace("\n", "<br/>") +
+                    WebUtility.HtmlEncode(request.mensaje).Replace("\n", "<br/>") +
                     "</div></div>" +
                     "</div></div>";
 
@@ -71,7 +71,7 @@ namespace NewLife.Controllers
             }
             catch (Exception ex)
             {
-                return InternalServerError(new Exception("No se pudo enviar el mensaje: " + ex.Message));
+                return StatusCode(500, "No se pudo enviar el mensaje: " + ex.Message);
             }
         }
     }

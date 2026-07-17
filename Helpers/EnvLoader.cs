@@ -1,18 +1,19 @@
 using System;
 using System.IO;
-using System.Web.Hosting;
 
 namespace NewLife.Helpers
 {
     // Carga variables de entorno desde un archivo .env en la raiz del proyecto
-    // (no versionado, ver .gitignore) hacia Environment, para que ConexionBD
-    // pueda leer POSTGRES_CONNECTION_STRING con Environment.GetEnvironmentVariable.
+    // (no versionado, ver .gitignore) hacia Environment, para que ConexionBD y
+    // demas helpers puedan leer sus variables con Environment.GetEnvironmentVariable.
+    // En Render las variables se configuran directamente en el dashboard y este
+    // archivo simplemente no existe, por lo que este loader no hace nada ahi.
     public static class EnvLoader
     {
         public static void CargarDotEnv()
         {
-            string ruta = HostingEnvironment.MapPath("~/.env");
-            if (ruta == null || !File.Exists(ruta)) return;
+            string ruta = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+            if (!File.Exists(ruta)) return;
 
             foreach (var linea in File.ReadAllLines(ruta))
             {

@@ -1,14 +1,9 @@
-using NewLife.Data;
-using NewLife.Models;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Configuration;
-using System.Linq;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
+using NewLife.Data;
+using NewLife.Models;
 
 namespace NewLife.Controllers
 {
@@ -17,8 +12,9 @@ namespace NewLife.Controllers
         public string referencia { get; set; }
     }
 
-    [RoutePrefix("api/pagos")]
-    public class PagosController : ApiController
+    [ApiController]
+    [Route("api/pagos")]
+    public class PagosController : ControllerBase
     {
         private const decimal IVA = 0.19m;
 
@@ -26,7 +22,7 @@ namespace NewLife.Controllers
         // Calcula el total con IVA desde la BD, devuelve firma Wompi y el montoCentavos real.
         [HttpPost]
         [Route("firma")]
-        public IHttpActionResult ObtenerFirma([FromBody] FirmaRequest req)
+        public IActionResult ObtenerFirma([FromBody] FirmaRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.referencia))
                 return BadRequest("Referencia requerida.");
@@ -48,8 +44,8 @@ namespace NewLife.Controllers
             decimal totalConIVA = subtotal * (1 + IVA) + envio;
             long montoCentavos = (long)Math.Round(totalConIVA * 100, MidpointRounding.AwayFromZero);
 
-            string integritySecret = ConfigurationManager.AppSettings["Wompi:IntegritySecret"];
-            string llavePublica = ConfigurationManager.AppSettings["Wompi:PublicKey"];
+            string integritySecret = Environment.GetEnvironmentVariable("WOMPI_INTEGRITY_SECRET");
+            string llavePublica = Environment.GetEnvironmentVariable("WOMPI_PUBLIC_KEY");
 
             // Fórmula Wompi: SHA256(referencia + montoCentavos + "COP" + integritySecret)
             string cadena = $"{req.referencia}{montoCentavos}COP{integritySecret}";
@@ -62,9 +58,10 @@ namespace NewLife.Controllers
         // Wompi llama a este endpoint cuando cambia el estado de una transacción
         [HttpPost]
         [Route("webhook")]
-        public async Task<IHttpActionResult> Webhook()
+        public async Task<IActionResult> Webhook()
         {
-            string body = await Request.Content.ReadAsStringAsync();
+            using var reader = new StreamReader(Request.Body);
+            string body = await reader.ReadToEndAsync();
             if (string.IsNullOrEmpty(body)) return Ok();
 
             JObject data;
@@ -85,7 +82,7 @@ namespace NewLife.Controllers
             string checksum = data["signature"]?["checksum"]?.ToString() ?? "";
 
             // Verificar firma del webhook
-            string eventsSecret = ConfigurationManager.AppSettings["Wompi:EventsSecret"];
+            string eventsSecret = Environment.GetEnvironmentVariable("WOMPI_EVENTS_SECRET");
             string firmaEsperada = ComputarSHA256($"{txId}{status}{montoCentavos}{timestamp}{eventsSecret}");
 
             if (checksum != firmaEsperada)

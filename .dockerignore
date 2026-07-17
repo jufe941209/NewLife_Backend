@@ -1,0 +1,39 @@
+# Build output / NuGet caches
+bin/
+obj/
+packages/
+
+# Secrets locales (en Render se configuran como variables de entorno en el dashboard)
+.env
+
+# Archivos de subida (efimeros; en Render el filesystem no persiste entre deploys)
+Uploads/
+
+# Control de versiones / editor / tooling
+.git/
+.github/
+.vs/
+.claude/
+.agents/
+*.user
+
+# Artefactos viejos de despliegue a Azure/IIS (ya no aplican con Docker)
+deploy_azure.zip
+deploy_newlife.zip
+deploy_out/
+NewLife_Content.zip
+NewLife_Deploy.zip
+NewLife_Deploy.deploy.cmd
+NewLife_Deploy.deploy-readme.txt
+NewLife_Deploy.SetParameters.xml
+NewLife_Deploy.SourceManifest.xml
+applicationHost.xdt
+Properties/PublishProfiles/
+
+# Scripts SQL de referencia (no se necesitan en la imagen, la BD ya vive en Neon)
+Scripts/
+StoredProcedures_NewLife.sql
+
+# Otros
+skills-lock.json
+NewLife.slnx

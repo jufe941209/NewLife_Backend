@@ -1,25 +1,23 @@
+using Microsoft.AspNetCore.Mvc;
 using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    [RoutePrefix("api/responsable")]
-    public class ResponsableController : ApiController
+    [ApiController]
+    [Route("api/responsable")]
+    public class ResponsableController : ControllerBase
     {
         [HttpGet]
-        [Route("")]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             var lista = ResponsableData.ListarResponsables();
             lista.ForEach(r => r.contrasena = null);
             return Ok(lista);
         }
 
-        [HttpGet]
-        [Route("{id}")]
-        public IHttpActionResult Get(string id)
+        [HttpGet("{id}")]
+        public IActionResult Get(string id)
         {
             var oResponsable = ResponsableData.ConsultarResponsable(id);
             if (oResponsable == null) return NotFound();
@@ -28,8 +26,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        [Route("")]
-        public IHttpActionResult Post([FromBody] Responsable oResponsable)
+        public IActionResult Post([FromBody] Responsable oResponsable)
         {
             if (oResponsable == null) return BadRequest("Datos inválidos.");
             bool resultado = ResponsableData.InsertarResponsable(oResponsable);
@@ -37,9 +34,8 @@ namespace NewLife.Controllers
             return BadRequest(ResponsableData.ultimoError);
         }
 
-        [HttpPut]
-        [Route("{id}")]
-        public IHttpActionResult Put(string id, [FromBody] Responsable oResponsable)
+        [HttpPut("{id}")]
+        public IActionResult Put(string id, [FromBody] Responsable oResponsable)
         {
             if (oResponsable == null) return BadRequest("Datos inválidos.");
             oResponsable.cedula_resp = id;
@@ -48,9 +44,8 @@ namespace NewLife.Controllers
             return BadRequest(ResponsableData.ultimoError);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             bool resultado = ResponsableData.EliminarResponsable(id);
             if (resultado) return Ok("Responsable eliminado exitosamente.");
@@ -59,7 +54,7 @@ namespace NewLife.Controllers
 
         [HttpPost]
         [Route("login")]
-        public IHttpActionResult Login([FromBody] LoginRequest req)
+        public IActionResult Login([FromBody] LoginRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.contrasena))
                 return BadRequest("Correo y contraseña son requeridos.");

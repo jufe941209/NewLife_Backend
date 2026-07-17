@@ -1,21 +1,22 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    public class TransporteController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TransporteController : ControllerBase
     {
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<Transporte> lista = TransporteData.ListarTransportes();
             return Ok(lista);
         }
 
-        [HttpGet]
-        public IHttpActionResult Get(string id)
+        [HttpGet("{id}")]
+        public IActionResult Get(string id)
         {
             Transporte oTransporte = TransporteData.ConsultarTransporte(id);
             if (oTransporte != null)
@@ -25,7 +26,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult Post([FromBody] Transporte oTransporte)
+        public IActionResult Post([FromBody] Transporte oTransporte)
         {
             if (oTransporte == null)
                 return BadRequest("Datos inválidos.");
@@ -38,7 +39,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPut]
-        public IHttpActionResult Put([FromBody] Transporte oTransporte)
+        public IActionResult Put([FromBody] Transporte oTransporte)
         {
             if (oTransporte == null)
                 return BadRequest("Datos inválidos.");
@@ -50,8 +51,8 @@ namespace NewLife.Controllers
                 return BadRequest(TransporteData.ultimoError);
         }
 
-        [HttpDelete]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             bool resultado = TransporteData.EliminarTransporte(id);
             if (resultado)

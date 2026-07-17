@@ -1,21 +1,22 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    public class TipoProductoController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TipoProductoController : ControllerBase
     {
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<TipoProducto> lista = TipoProductoData.ListarTiposProducto();
             return Ok(lista);
         }
 
-        [HttpGet]
-        public IHttpActionResult Get(int id)
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
         {
             TipoProducto oTipoProducto = TipoProductoData.ConsultarTipoProducto(id);
             if (oTipoProducto != null)
@@ -25,7 +26,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult Post([FromBody] TipoProducto oTipoProducto)
+        public IActionResult Post([FromBody] TipoProducto oTipoProducto)
         {
             if (oTipoProducto == null)
                 return BadRequest("Datos inválidos.");
@@ -38,7 +39,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPut]
-        public IHttpActionResult Put([FromBody] TipoProducto oTipoProducto)
+        public IActionResult Put([FromBody] TipoProducto oTipoProducto)
         {
             if (oTipoProducto == null)
                 return BadRequest("Datos inválidos.");
@@ -50,8 +51,8 @@ namespace NewLife.Controllers
                 return BadRequest(TipoProductoData.ultimoError);
         }
 
-        [HttpDelete]
-        public IHttpActionResult Delete(int id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
         {
             bool resultado = TipoProductoData.EliminarTipoProducto(id);
             if (resultado)

@@ -1,8 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
 using NewLife.Data;
 using NewLife.Models;
-using System;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
@@ -12,11 +10,13 @@ namespace NewLife.Controllers
         public string cc_responsable { get; set; }
     }
 
-    public class DespachoController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DespachoController : ControllerBase
     {
         // GET api/despacho
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<Despacho> lista = DespachoData.ListarDespachos();
             return Ok(lista);
@@ -24,16 +24,16 @@ namespace NewLife.Controllers
 
         // GET api/despacho/disponibles — despachos sin responsable asignado
         [HttpGet]
-        [Route("api/despacho/disponibles")]
-        public IHttpActionResult GetDisponibles()
+        [Route("/api/despacho/disponibles")]
+        public IActionResult GetDisponibles()
         {
             List<Despacho> lista = DespachoData.ListarDespachosDisponibles();
             return Ok(lista);
         }
 
         // GET api/despacho/1
-        [HttpGet]
-        public IHttpActionResult Get(int id)
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
         {
             Despacho oDespacho = DespachoData.ConsultarDespacho(id);
             if (oDespacho != null)
@@ -44,7 +44,7 @@ namespace NewLife.Controllers
 
         // POST api/despacho
         [HttpPost]
-        public IHttpActionResult Post([FromBody] Despacho oDespacho)
+        public IActionResult Post([FromBody] Despacho oDespacho)
         {
             if (oDespacho == null)
                 return BadRequest("Datos inválidos.");
@@ -58,8 +58,8 @@ namespace NewLife.Controllers
 
         // PUT api/despacho/aprobar — responsable aprueba y se asigna el despacho
         [HttpPut]
-        [Route("api/despacho/aprobar")]
-        public IHttpActionResult Aprobar([FromBody] AprobarDespachoRequest req)
+        [Route("/api/despacho/aprobar")]
+        public IActionResult Aprobar([FromBody] AprobarDespachoRequest req)
         {
             if (req == null || req.numero_despacho == 0 || string.IsNullOrEmpty(req.cc_responsable))
                 return BadRequest("Numero de despacho y cedula del responsable son requeridos.");
@@ -84,7 +84,7 @@ namespace NewLife.Controllers
 
         // PUT api/despacho
         [HttpPut]
-        public IHttpActionResult Put([FromBody] Despacho oDespacho)
+        public IActionResult Put([FromBody] Despacho oDespacho)
         {
             if (oDespacho == null)
                 return BadRequest("Datos inválidos.");
@@ -101,8 +101,8 @@ namespace NewLife.Controllers
         }
 
         // DELETE api/despacho/1
-        [HttpDelete]
-        public IHttpActionResult Delete(int id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
         {
             bool resultado = DespachoData.EliminarDespacho(id);
             if (resultado)

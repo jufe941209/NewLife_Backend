@@ -1,7 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
 using NewLife.Data;
 using NewLife.Helpers;
-using System;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
@@ -27,12 +26,13 @@ namespace NewLife.Controllers
         public string rol { get; set; } // "cliente" | "responsable"
     }
 
-    public class VerificacionController : ApiController
+    [ApiController]
+    public class VerificacionController : ControllerBase
     {
         // POST api/Verificacion/Enviar
         [HttpPost]
         [Route("api/Verificacion/Enviar")]
-        public IHttpActionResult Enviar([FromBody] EnviarCodigoRequest req)
+        public IActionResult Enviar([FromBody] EnviarCodigoRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.tipo))
                 return BadRequest("Datos incompletos.");
@@ -43,7 +43,7 @@ namespace NewLife.Controllers
             string codigo = new Random().Next(100000, 999999).ToString();
             bool guardado = VerificacionData.GuardarCodigo(req.correo, codigo, req.tipo);
             if (!guardado)
-                return InternalServerError(new Exception("No se pudo guardar el código."));
+                return StatusCode(500, "No se pudo guardar el código.");
 
             try
             {
@@ -64,7 +64,7 @@ namespace NewLife.Controllers
         // POST api/Verificacion/Confirmar
         [HttpPost]
         [Route("api/Verificacion/Confirmar")]
-        public IHttpActionResult Confirmar([FromBody] ConfirmarCodigoRequest req)
+        public IActionResult Confirmar([FromBody] ConfirmarCodigoRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.codigo))
                 return BadRequest("Datos incompletos.");
@@ -79,7 +79,7 @@ namespace NewLife.Controllers
         // POST api/Verificacion/RecuperarPassword
         [HttpPost]
         [Route("api/Verificacion/RecuperarPassword")]
-        public IHttpActionResult RecuperarPassword([FromBody] RecuperarPasswordRequest req)
+        public IActionResult RecuperarPassword([FromBody] RecuperarPasswordRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.correo) || string.IsNullOrEmpty(req.codigo)
                 || string.IsNullOrEmpty(req.nuevaContrasena))

@@ -1,23 +1,24 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    public class DetalleFacturaController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DetalleFacturaController : ControllerBase
     {
         // GET api/detallefactura
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<DetalleFactura> lista = DetalleFacturaData.ListarDetalleFactura();
             return Ok(lista);
         }
 
         // GET api/detallefactura/1
-        [HttpGet]
-        public IHttpActionResult Get(int id)
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
         {
             DetalleFactura oDetalle = DetalleFacturaData.ConsultarDetalleFactura(id);
             if (oDetalle != null)
@@ -26,10 +27,10 @@ namespace NewLife.Controllers
                 return NotFound();
         }
 
-        // GET api/detallefactura?numerofactura=FV-2024-001
+        // GET api/detallefactura/porfactura/FV-2024-001
         [HttpGet]
-        [Route("api/detallefactura/porfactura/{numeroFactura}")]
-        public IHttpActionResult GetPorFactura(string numeroFactura)
+        [Route("/api/detallefactura/porfactura/{numeroFactura}")]
+        public IActionResult GetPorFactura(string numeroFactura)
         {
             List<DetalleFactura> lista = DetalleFacturaData.ListarDetalleFacturaPorFactura(numeroFactura);
             return Ok(lista);
@@ -37,7 +38,7 @@ namespace NewLife.Controllers
 
         // POST api/detallefactura
         [HttpPost]
-        public IHttpActionResult Post([FromBody] DetalleFactura oDetalle)
+        public IActionResult Post([FromBody] DetalleFactura oDetalle)
         {
             if (oDetalle == null)
                 return BadRequest("Datos inválidos.");
@@ -50,7 +51,7 @@ namespace NewLife.Controllers
 
         // PUT api/detallefactura
         [HttpPut]
-        public IHttpActionResult Put([FromBody] DetalleFactura oDetalle)
+        public IActionResult Put([FromBody] DetalleFactura oDetalle)
         {
             if (oDetalle == null)
                 return BadRequest("Datos inválidos.");
@@ -62,8 +63,8 @@ namespace NewLife.Controllers
         }
 
         // DELETE api/detallefactura/1
-        [HttpDelete]
-        public IHttpActionResult Delete(int id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
         {
             bool resultado = DetalleFacturaData.EliminarDetalleFactura(id);
             if (resultado)
@@ -74,8 +75,8 @@ namespace NewLife.Controllers
 
         // POST api/detallefactura/migrar-precio
         [HttpPost]
-        [Route("api/detallefactura/migrar-precio")]
-        public IHttpActionResult MigrarPrecio()
+        [Route("/api/detallefactura/migrar-precio")]
+        public IActionResult MigrarPrecio()
         {
             string resultado = DetalleFacturaData.MigrarPrecioUnitario();
             return Ok(resultado);

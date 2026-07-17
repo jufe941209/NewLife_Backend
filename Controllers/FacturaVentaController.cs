@@ -1,21 +1,22 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    public class FacturaVentaController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class FacturaVentaController : ControllerBase
     {
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<FacturaVenta> lista = FacturaVentaData.ListarFacturasVenta();
             return Ok(lista);
         }
 
-        [HttpGet]
-        public IHttpActionResult Get(string id)
+        [HttpGet("{id}")]
+        public IActionResult Get(string id)
         {
             FacturaVenta oFactura = FacturaVentaData.ConsultarFacturaVenta(id);
             if (oFactura != null)
@@ -25,7 +26,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult Post([FromBody] FacturaVenta oFactura)
+        public IActionResult Post([FromBody] FacturaVenta oFactura)
         {
             if (oFactura == null)
                 return BadRequest("Datos inválidos.");
@@ -38,7 +39,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPut]
-        public IHttpActionResult Put([FromBody] FacturaVenta oFactura)
+        public IActionResult Put([FromBody] FacturaVenta oFactura)
         {
             if (oFactura == null)
                 return BadRequest("Datos inválidos.");
@@ -53,7 +54,7 @@ namespace NewLife.Controllers
             {
                 var despacho = new Despacho
                 {
-                    fecha_despacho = System.DateTime.Now,
+                    fecha_despacho = DateTime.Now,
                     numero_factura = oFactura.numero_factura,
                     cc_responsable = "",
                     cc_domiciliario = "",
@@ -65,8 +66,8 @@ namespace NewLife.Controllers
             return Ok("Factura de venta actualizada exitosamente.");
         }
 
-        [HttpDelete]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             bool resultado = FacturaVentaData.EliminarFacturaVenta(id);
             if (resultado)

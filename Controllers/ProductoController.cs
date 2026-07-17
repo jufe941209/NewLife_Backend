@@ -1,21 +1,22 @@
-﻿using NewLife.Data;
+using Microsoft.AspNetCore.Mvc;
+using NewLife.Data;
 using NewLife.Models;
-using System.Collections.Generic;
-using System.Web.Http;
 
 namespace NewLife.Controllers
 {
-    public class ProductoController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProductoController : ControllerBase
     {
         [HttpGet]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             List<Producto> lista = ProductoData.ListarProductos();
             return Ok(lista);
         }
 
-        [HttpGet]
-        public IHttpActionResult Get(string id)
+        [HttpGet("{id}")]
+        public IActionResult Get(string id)
         {
             Producto oProducto = ProductoData.ConsultarProducto(id);
             if (oProducto != null)
@@ -25,7 +26,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult Post([FromBody] Producto oProducto)
+        public IActionResult Post([FromBody] Producto oProducto)
         {
             if (oProducto == null)
                 return BadRequest("Datos inválidos.");
@@ -38,7 +39,7 @@ namespace NewLife.Controllers
         }
 
         [HttpPut]
-        public IHttpActionResult Put([FromBody] Producto oProducto)
+        public IActionResult Put([FromBody] Producto oProducto)
         {
             if (oProducto == null)
                 return BadRequest("Datos inválidos.");
@@ -50,8 +51,8 @@ namespace NewLife.Controllers
                 return BadRequest(ProductoData.ultimoError);
         }
 
-        [HttpDelete]
-        public IHttpActionResult Delete(string id)
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
         {
             bool resultado = ProductoData.EliminarProducto(id);
             if (resultado)
@@ -61,16 +62,16 @@ namespace NewLife.Controllers
         }
 
         [HttpPost]
-        [Route("api/producto/migrar-stock")]
-        public IHttpActionResult MigrarStock()
+        [Route("/api/producto/migrar-stock")]
+        public IActionResult MigrarStock()
         {
             string resultado = ProductoData.MigrarStockReal();
             return Ok(resultado);
         }
 
         [HttpPost]
-        [Route("api/producto/reducir-stock/{id}/{cantidad}")]
-        public IHttpActionResult ReducirStock(string id, int cantidad)
+        [Route("/api/producto/reducir-stock/{id}/{cantidad}")]
+        public IActionResult ReducirStock(string id, int cantidad)
         {
             bool resultado = ProductoData.ReducirStock(id, cantidad);
             if (resultado)

@@ -1,13 +1,13 @@
-using System;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace NewLife.Controllers
 {
-    public class HealthController : ApiController
+    [ApiController]
+    public class HealthController : ControllerBase
     {
         [HttpGet]
         [Route("api/health")]
-        public IHttpActionResult Get()
+        public IActionResult Get()
         {
             return Ok(new { status = "ok", ts = DateTime.UtcNow });
         }
