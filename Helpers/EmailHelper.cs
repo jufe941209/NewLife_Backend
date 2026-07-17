@@ -1,37 +1,38 @@
 using System;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace NewLife.Helpers
 {
     public static class EmailHelper
     {
-        // Reutiliza las mismas credenciales SMTP de Gmail que FormularioController
-        // (Brevo nunca tuvo una API key configurada, ni en el backend viejo).
-        private static string Host     => Environment.GetEnvironmentVariable("SMTP_HOST")      ?? "smtp.gmail.com";
-        private static int    Port     => int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587");
-        private static string User     => Environment.GetEnvironmentVariable("SMTP_USER")      ?? "";
-        private static string Pass     => Environment.GetEnvironmentVariable("SMTP_PASS")      ?? "";
-        private static string FromAddr => Environment.GetEnvironmentVariable("SMTP_FROM")      ?? User;
-        private static string FromName => Environment.GetEnvironmentVariable("SMTP_FROM_NAME") ?? "NEW LIFE";
+        // Brevo por API HTTP (no SMTP): Render bloquea los puertos SMTP salientes
+        // (25/465/587), asi que el envio tiene que ser por HTTPS.
+        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+
+        private static string ApiKey   => Environment.GetEnvironmentVariable("BREVO_API_KEY")   ?? "";
+        private static string FromAddr => Environment.GetEnvironmentVariable("EMAIL_FROM")       ?? "";
+        private static string FromName => Environment.GetEnvironmentVariable("EMAIL_FROM_NAME")  ?? "NEW LIFE";
 
         public static void Enviar(string destinatario, string asunto, string cuerpoHtml)
         {
-            using (var smtp = new SmtpClient(Host, Port))
+            var payload = new
             {
-                smtp.EnableSsl = true;
-                smtp.Credentials = new NetworkCredential(User, Pass);
-                smtp.Timeout = 20000;
+                sender = new { email = FromAddr, name = FromName },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = cuerpoHtml
+            };
 
-                var mail = new MailMessage();
-                mail.From = new MailAddress(FromAddr, FromName);
-                mail.To.Add(destinatario);
-                mail.Subject = asunto;
-                mail.Body = cuerpoHtml;
-                mail.IsBodyHtml = true;
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            request.Headers.Add("api-key", ApiKey);
+            request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
-                smtp.Send(mail);
-            }
+            var response = _http.Send(request);
+            string body = response.Content.ReadAsStringAsync().Result;
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("Brevo error (" + (int)response.StatusCode + "): " + body);
         }
 
         private static string PlantillaBase(string titulo, string subtitulo, string contenido)
