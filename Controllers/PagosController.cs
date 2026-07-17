@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NewLife.Data;
 using NewLife.Models;
@@ -65,7 +66,15 @@ namespace NewLife.Controllers
             if (string.IsNullOrEmpty(body)) return Ok();
 
             JObject data;
-            try { data = JObject.Parse(body); }
+            try
+            {
+                // DateParseHandling.None es obligatorio: por defecto Newtonsoft detecta el
+                // timestamp como fecha y lo reformatea con la cultura del servidor al hacer
+                // ToString(), lo que rompe la cadena que se firma contra Wompi.
+                using var stringReader = new StringReader(body);
+                using var jsonReader = new JsonTextReader(stringReader) { DateParseHandling = DateParseHandling.None };
+                data = JObject.Load(jsonReader);
+            }
             catch { return BadRequest("JSON inválido"); }
 
             string evento = data["event"]?.ToString();
